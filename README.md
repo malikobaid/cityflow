@@ -102,3 +102,12 @@ License
 -------
 
 MIT — see `LICENSE`.
+
+Contact
+-------
+
+- Maintainer: Obaid Malik
+- Website: https://obaidmalik.co.uk
+- LinkedIn: https://linkedin.com/in/malikobaid1
+- Contact: malikobaid@gmail.com
+- Issues: please use GitHub Issues for bugs and feature requests
