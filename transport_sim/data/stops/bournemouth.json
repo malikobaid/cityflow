@@ -1,0 +1,64 @@
+{
+  "stops": [
+    {
+      "name": "Boscombe Bus Station",
+      "lat": 50.72803695,
+      "lon": -1.8380919110228149
+    },
+    {
+      "name": "Bournemouth",
+      "lat": 50.7272516,
+      "lon": -1.8637012
+    },
+    {
+      "name": "Pokesdown",
+      "lat": 50.7311425,
+      "lon": -1.8276089
+    },
+    {
+      "name": "Bournemouth Travel Interchange",
+      "lat": 50.7267454,
+      "lon": -1.8648734
+    },
+    {
+      "name": "Fisherman's Walk Upper Station",
+      "lat": 50.7212542,
+      "lon": -1.8173159693566405
+    },
+    {
+      "name": "Fisherman's Walk Seafront Office and Cliff Lift",
+      "lat": 50.7209571,
+      "lon": -1.817221442314374
+    },
+    {
+      "name": "Westover Road",
+      "lat": 50.7188038,
+      "lon": -1.8754976
+    },
+    {
+      "name": "Bournemouth Pier",
+      "lat": 50.7165693,
+      "lon": -1.8770058
+    },
+    {
+      "name": "West Cliff Lift Top",
+      "lat": 50.7152694,
+      "lon": -1.8814061554079664
+    },
+    {
+      "name": "West Cliff Lift Bottom",
+      "lat": 50.714923600000006,
+      "lon": -1.8812701373595526
+    },
+    {
+      "name": "Bournemouth University Bus Hub",
+      "lat": 50.74292935,
+      "lon": -1.8983317354297213
+    },
+    {
+      "name": "Tuckton Tea Gardens",
+      "lat": 50.7294665,
+      "lon": -1.7878282
+    }
+  ]
+}

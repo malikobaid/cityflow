@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CityFlow • API</title>
+  <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="../assets/css/site.css" />
+  <script src="../assets/js/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/alpine.min.js" defer></script>
+  <script src="../assets/js/app.js"></script>
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="container py-4">
+    <h1 class="mb-3">API Documentation</h1>
+    <p class="text-muted">This page links to the live FastAPI docs using the API base configured in <code>web/config/site.json</code>.</p>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Live API docs</h5>
+        <p id="apiLinks" class="mb-0">Loading…</p>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-body">
+        <h5 class="card-title">Project docs (local)</h5>
+        <p class="text-muted small">These links work when serving from the repo root; production hosting may not include these files.</p>
+        <ul class="mb-0">
+          <li><a href="/project_docs/overview.md" target="_blank" rel="noopener">Overview</a></li>
+          <li><a href="/project_docs/architecture.md" target="_blank" rel="noopener">Architecture</a></li>
+          <li><a href="/project_docs/api.md" target="_blank" rel="noopener">API Reference</a></li>
+          <li><a href="/project_docs/data_pipeline.md" target="_blank" rel="noopener">Data Pipeline</a></li>
+          <li><a href="/project_docs/operations.md" target="_blank" rel="noopener">Operations & Cost</a></li>
+          <li><a href="/project_docs/changelog.md" target="_blank" rel="noopener">Changelog</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <h5 class="mt-4">Relevant endpoints</h5>
+    <ul>
+      <li><code>GET /v1/cities</code> — list of cities and stops</li>
+      <li><code>POST /v1/submit</code> — submit a simulation job</li>
+      <li><code>GET /v1/status/{job_id}</code> — poll job status</li>
+      <li><code>POST /v1/insights/{job_id}</code> — summary markdown for a completed job</li>
+      <li><code>POST /v1/insights/{job_id}/chat</code> — ask follow‑ups about a job</li>
+    </ul>
+  </main>
+  <div id="site-footer"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      function render(baseRoot){
+        const base = (baseRoot || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+        const html = [
+          `<a href="${base}/docs" target="_blank" rel="noopener">${base}/docs</a> (Swagger UI)`,
+          `<br/>`,
+          `<a href="${base}/redoc" target="_blank" rel="noopener">${base}/redoc</a> (ReDoc)`
+        ].join('');
+        const el = document.getElementById('apiLinks');
+        if (el) el.innerHTML = html;
+      }
+      const ready = window.SK && window.SK.api && window.SK.api.baseRoot;
+      if (ready) render(window.SK.api.baseRoot);
+      window.addEventListener('sk:config-ready', (e)=>{
+        const root = e?.detail?.api?.baseRoot;
+        if (root) render(root);
+      }, { once:true });
+    });
+  </script>
+</body>
+</html>

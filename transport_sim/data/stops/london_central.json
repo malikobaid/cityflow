@@ -1,0 +1,59 @@
+{
+  "stops": [
+    {
+      "name": "Dorset Street",
+      "lat": 51.5186629,
+      "lon": -0.1582465
+    },
+    {
+      "name": "Portman Street / Marble Arch Station",
+      "lat": 51.5147253,
+      "lon": -0.1564257
+    },
+    {
+      "name": "Marble Arch / Edgware Road",
+      "lat": 51.5139596,
+      "lon": -0.1612841
+    },
+    {
+      "name": "Marble Arch Station / Edgware Road",
+      "lat": 51.5135493,
+      "lon": -0.1604743
+    },
+    {
+      "name": "Marble Arch / Bayswater Road",
+      "lat": 51.51307,
+      "lon": -0.1620668
+    },
+    {
+      "name": "Marble Arch",
+      "lat": 51.5135523,
+      "lon": -0.1584028
+    },
+    {
+      "name": "Marble Arch Station",
+      "lat": 51.5135354,
+      "lon": -0.1575604
+    },
+    {
+      "name": "Marble Arch Station / Park Lane",
+      "lat": 51.512316,
+      "lon": -0.157748
+    },
+    {
+      "name": "George Street",
+      "lat": 51.5162789,
+      "lon": -0.1646244
+    },
+    {
+      "name": "Park Lane",
+      "lat": 51.5110557,
+      "lon": -0.1578505
+    },
+    {
+      "name": "Portman Street / Selfridges",
+      "lat": 51.5142563,
+      "lon": -0.1561998
+    }
+  ]
+}

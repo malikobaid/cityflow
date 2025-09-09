@@ -1,0 +1,26 @@
+{
+  "city": "Bournemouth",
+  "tramline": [
+    "Bournemouth Pier",
+    "Southbourne"
+  ],
+  "num_agents": 300,
+  "agent_distribution": {
+    "drive": 63,
+    "cycle": 4,
+    "tram": 33
+  },
+  "sim_date": "2025-08-07",
+  "sim_time": "08:00",
+  "scenarios": {
+    "baseline": {},
+    "tramline_extension": {
+      "tram_stops": [
+        "Bournemouth Pier",
+        "Southbourne"
+      ],
+      "length": 300
+    }
+  },
+  "traffic": "peak"
+}

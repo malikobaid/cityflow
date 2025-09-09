@@ -1,0 +1,297 @@
+[
+  {
+    "name": "Bournemouth, UK",
+    "slug": "bournemouth",
+    "enabled": true,
+    "facts": {
+      "population": 197700,
+      "area_km2": 383.7860768915933,
+      "density_km2": 515.1307249112208,
+      "source": "OSMnx geocoded (offline build)"
+    },
+    "stops": [
+      {
+        "name": "Boscombe Bus Station",
+        "lat": 50.72803695,
+        "lon": -1.8380919110228149
+      },
+      {
+        "name": "Bournemouth",
+        "lat": 50.7272516,
+        "lon": -1.8637012
+      },
+      {
+        "name": "Pokesdown",
+        "lat": 50.7311425,
+        "lon": -1.8276089
+      },
+      {
+        "name": "Bournemouth Travel Interchange",
+        "lat": 50.7267454,
+        "lon": -1.8648734
+      },
+      {
+        "name": "Fisherman's Walk Upper Station",
+        "lat": 50.7212542,
+        "lon": -1.8173159693566405
+      },
+      {
+        "name": "Fisherman's Walk Seafront Office and Cliff Lift",
+        "lat": 50.7209571,
+        "lon": -1.817221442314374
+      },
+      {
+        "name": "Westover Road",
+        "lat": 50.7188038,
+        "lon": -1.8754976
+      },
+      {
+        "name": "Bournemouth Pier",
+        "lat": 50.7165693,
+        "lon": -1.8770058
+      },
+      {
+        "name": "West Cliff Lift Top",
+        "lat": 50.7152694,
+        "lon": -1.8814061554079664
+      },
+      {
+        "name": "West Cliff Lift Bottom",
+        "lat": 50.714923600000006,
+        "lon": -1.8812701373595526
+      },
+      {
+        "name": "Bournemouth University Bus Hub",
+        "lat": 50.74292935,
+        "lon": -1.8983317354297213
+      },
+      {
+        "name": "Tuckton Tea Gardens",
+        "lat": 50.7294665,
+        "lon": -1.7878282
+      }
+    ],
+    "display": "Bournemouth",
+    "hub": "Bournemouth Station"
+  },
+  {
+    "name": "City of Westminster, Greater London, UK",
+    "slug": "london_central",
+    "enabled": true,
+    "facts": {
+      "population": 261000,
+      "area_km2": 262.74625331505763,
+      "density_km2": 993.3538412326523,
+      "source": "OSMnx geocoded (offline build)"
+    },
+    "stops": [
+      {
+        "name": "Dorset Street",
+        "lat": 51.5186629,
+        "lon": -0.1582465
+      },
+      {
+        "name": "Portman Street / Marble Arch Station",
+        "lat": 51.5147253,
+        "lon": -0.1564257
+      },
+      {
+        "name": "Marble Arch / Edgware Road",
+        "lat": 51.5139596,
+        "lon": -0.1612841
+      },
+      {
+        "name": "Marble Arch Station / Edgware Road",
+        "lat": 51.5135493,
+        "lon": -0.1604743
+      },
+      {
+        "name": "Marble Arch / Bayswater Road",
+        "lat": 51.51307,
+        "lon": -0.1620668
+      },
+      {
+        "name": "Marble Arch",
+        "lat": 51.5135523,
+        "lon": -0.1584028
+      },
+      {
+        "name": "Marble Arch Station",
+        "lat": 51.5135354,
+        "lon": -0.1575604
+      },
+      {
+        "name": "Marble Arch Station / Park Lane",
+        "lat": 51.512316,
+        "lon": -0.157748
+      },
+      {
+        "name": "George Street",
+        "lat": 51.5162789,
+        "lon": -0.1646244
+      },
+      {
+        "name": "Park Lane",
+        "lat": 51.5110557,
+        "lon": -0.1578505
+      },
+      {
+        "name": "Portman Street / Selfridges",
+        "lat": 51.5142563,
+        "lon": -0.1561998
+      }
+    ],
+    "display": "London (Central)",
+    "hub": "Marble Arch Station"
+  },
+  {
+    "name": "Manchester, UK",
+    "slug": "manchester_central",
+    "enabled": true,
+    "facts": {
+      "population": 552000,
+      "area_km2": 592.5893987538516,
+      "density_km2": 931.5050204421367,
+      "source": "OSMnx geocoded (offline build)"
+    },
+    "stops": [
+      {
+        "name": "Withington",
+        "lat": 53.432782,
+        "lon": -2.2493129
+      },
+      {
+        "name": "Burton Road",
+        "lat": 53.4291871,
+        "lon": -2.2406146
+      },
+      {
+        "name": "West Didsbury",
+        "lat": 53.4244715,
+        "lon": -2.2360866
+      },
+      {
+        "name": "Southern Cemetery Bus Station",
+        "lat": 53.4251571,
+        "lon": -2.2540299
+      },
+      {
+        "name": "St Werburgh's Road",
+        "lat": 53.4388584,
+        "lon": -2.2656692
+      },
+      {
+        "name": "Manchester Oxford Road",
+        "lat": 53.4737916,
+        "lon": -2.2411066
+      },
+      {
+        "name": "Deansgate",
+        "lat": 53.4740505,
+        "lon": -2.2502234
+      },
+      {
+        "name": "Deansgate-Castlefield",
+        "lat": 53.4747074,
+        "lon": -2.2503671
+      },
+      {
+        "name": "Chorlton Street",
+        "lat": 53.47779235,
+        "lon": -2.2375051638115875
+      },
+      {
+        "name": "Manchester Piccadilly",
+        "lat": 53.4761284,
+        "lon": -2.2296773
+      },
+      {
+        "name": "St. Peter's Square",
+        "lat": 53.4780112,
+        "lon": -2.2433679
+      },
+      {
+        "name": "Manchester Central Coach Station",
+        "lat": 53.4781622,
+        "lon": -2.2373605
+      }
+    ],
+    "display": "Manchester, Greater Manchester, UK",
+    "hub": "Manchester Piccadilly"
+  },
+  {
+    "name": "Birmingham, UK",
+    "slug": "birmingham_central",
+    "enabled": true,
+    "facts": {
+      "population": 1144900,
+      "area_km2": 839.6308569207323,
+      "density_km2": 1363.5754219405583,
+      "source": "OSMnx geocoded (offline build)"
+    },
+    "stops": [
+      {
+        "name": "Duddeston",
+        "lat": 52.4885021,
+        "lon": -1.871357
+      },
+      {
+        "name": "Millenium Point (Temporary) [2025]",
+        "lat": 52.4809216,
+        "lon": -1.8898386
+      },
+      {
+        "name": "High Street Deritend [2026]",
+        "lat": 52.4751345,
+        "lon": -1.887108
+      },
+      {
+        "name": "Bordesley",
+        "lat": 52.4722127,
+        "lon": -1.877661
+      },
+      {
+        "name": "Birmingham Coach Station",
+        "lat": 52.4753014,
+        "lon": -1.8884997
+      },
+      {
+        "name": "Albert Street [2025]",
+        "lat": 52.4804256,
+        "lon": -1.8926295
+      },
+      {
+        "name": "Birmingham Moor Street",
+        "lat": 52.4789357,
+        "lon": -1.8919518
+      },
+      {
+        "name": "Aston",
+        "lat": 52.5044169,
+        "lon": -1.8720459
+      },
+      {
+        "name": "Bull Street",
+        "lat": 52.4820227,
+        "lon": -1.8964537
+      },
+      {
+        "name": "Corporation Street",
+        "lat": 52.48005,
+        "lon": -1.8969
+      },
+      {
+        "name": "Birmingham Snow Hill",
+        "lat": 52.4834796,
+        "lon": -1.8992405
+      },
+      {
+        "name": "Colmore Row Bus Station",
+        "lat": 52.4816248,
+        "lon": -1.8991371
+      }
+    ],
+    "display": "Birmingham, West Midlands, UK",
+    "hub": "Birmingham Moor Street"
+  }
+]

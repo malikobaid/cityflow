@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+
+cache/
+*.log
+local_data/jobs/
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+venv-skyral/
+
+# macOS system files
+.DS_Store
+
+# IDE/editor files
+.idea/
+.vscode/
+
+# Static build output (from Flask-Frozen)
+build/
+
+# Other ignored files
+*.log
+.env
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# MyPy, coverage, and test output
+.mypy_cache/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Custom local
+core_sim/
+**/core_sim/
+cache/
+**/cache/
+api/venv-skyraldemo/
+api/venv-cityflow/
+ver_archive/
+ai_assistant_context/
+venv-cityflow/
+api/venv-cityflow/
+

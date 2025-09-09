@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CityFlow • Simulate</title>
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="assets/css/site.css" />
+  <!-- Scripts -->
+  <script src="assets/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/alpine.min.js" defer></script>
+  <script src="assets/js/app.js"></script>
+  <style>
+    :root { --ink:#111827; --muted:#6b7280; --bd:#e5e7eb; --card:#fff; --bg:#f9fafb; }
+    .card-sim { background:var(--card); border: 1px solid var(--bd); border-radius: 14px; padding: 16px; margin: 12px 0; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#111827; color:white; font-size:12px; }
+    .small { font-size: 12px; }
+    .facts { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:8px; margin-top:8px; }
+    .fact { background:#f9fafb; border:1px solid var(--bd); border-radius:10px; padding:10px; text-align:center; }
+    .status { padding:10px 12px; border-radius:10px; background:#f3f4f6; }
+    pre { background: #0b1020; color:#e5e7eb; padding:12px; border-radius:10px; overflow:auto; }
+  </style>
+</head>
+<body class="bg-light">
+  <!-- Header injected at runtime -->
+  <div id="site-header"></div>
+
+  <main class="container my-4">
+    <h1 class="mb-3">Agent Simulation Configuration</h1>
+
+    <div class="card-sim">
+      <div class="row g-3">
+        <div class="col-md-6 col-lg-4">
+          <label for="city" class="form-label fw-semibold">City</label>
+          <select id="city" class="form-select"></select>
+          <div class="form-text">Loaded from <code>/v1/cities</code>.</div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+          <label for="traffic" class="form-label fw-semibold">Traffic level</label>
+          <select id="traffic" class="form-select">
+            <option value="off-peak" selected>off-peak</option>
+            <option value="peak">peak</option>
+          </select>
+        </div>
+
+        <div class="col-md-6 col-lg-2">
+          <label for="sim_date" class="form-label fw-semibold">Simulation date</label>
+          <input id="sim_date" type="date" class="form-control" />
+        </div>
+
+        <div class="col-md-6 col-lg-2">
+          <label for="sim_time" class="form-label fw-semibold">Simulation time</label>
+          <input id="sim_time" type="time" value="08:00" class="form-control" />
+        </div>
+      </div>
+
+      <div class="row g-3 mt-2">
+        <div class="col-md-6">
+          <label for="tram_start" class="form-label fw-semibold">Tram start</label>
+          <select id="tram_start" class="form-select"></select>
+        </div>
+
+        <div class="col-md-6">
+          <label for="tram_end" class="form-label fw-semibold">Tram end</label>
+          <select id="tram_end" class="form-select"></select>
+        </div>
+      </div>
+
+      <div class="row g-3 mt-2">
+        <div class="col-md-3">
+          <label for="num_agents" class="form-label fw-semibold">Number of agents</label>
+          <input id="num_agents" type="number" min="1" step="1" value="300" class="form-control" />
+        </div>
+        <div class="col-md-3">
+          <label for="drive" class="form-label fw-semibold">Drive (%)</label>
+          <input id="drive" type="number" min="0" max="100" step="1" value="60" class="form-control" />
+        </div>
+        <div class="col-md-3">
+          <label for="cycle" class="form-label fw-semibold">Cycle (%)</label>
+          <input id="cycle" type="number" min="0" max="100" step="1" value="10" class="form-control" />
+        </div>
+        <div class="col-md-3">
+          <label for="tram" class="form-label fw-semibold">Tram (%)</label>
+          <input id="tram" type="number" min="0" max="100" step="1" value="30" class="form-control" />
+          <div class="form-text">Auto-adjusts so total = 100</div>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 mt-3">
+        <button id="submitBtn" class="btn btn-dark">Run simulation</button>
+        <span id="saveState" class="text-muted small">Ready</span>
+      </div>
+    </div>
+
+    <div class="card-sim">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <h5 class="mb-2">Configuration Preview <span class="pill">POST /v1/submit</span></h5>
+          <pre id="preview">{}</pre>
+          <div class="form-text">API base: <code id="apiBaseText"></code></div>
+        </div>
+        <div class="col-lg-6">
+          <h5 class="mb-2">City facts</h5>
+          <div class="facts">
+            <div class="fact"><div class="small text-muted">Population</div><div id="fact_pop">—</div></div>
+            <div class="fact"><div class="small text-muted">Area (km²)</div><div id="fact_area">—</div></div>
+            <div class="fact"><div class="small text-muted">Density (/km²)</div><div id="fact_density">—</div></div>
+          </div>
+          <div class="text-muted small mt-1" id="fact_source"></div>
+          <h5 class="mt-3 mb-2">Job status</h5>
+          <div class="status">
+            <div>Job ID: <code id="jobId">—</code></div>
+            <div>Status: <span id="jobStatus" class="text-muted">Idle</span></div>
+            <div id="jobWhen" class="small text-muted"></div>
+          </div>
+          <div class="mt-2">
+            <a id="viewResults" href="#" style="display:none;">Open results page →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer injected at runtime -->
+  <div id="site-footer"></div>
+
+  <script>
+    // ====== CONFIG (unified) ======
+    let API_BASE = (window.SK?.api?.baseRoot || "http://127.0.0.1:8000");
+    let CITIES_URL = API_BASE.replace(/\/+$/,'') + "/v1/cities";
+    window.addEventListener('sk:config-ready', (e) => {
+      const root = e?.detail?.api?.baseRoot || '';
+      if (root) {
+        API_BASE = root;
+        CITIES_URL = API_BASE.replace(/\/+$/,'') + "/v1/cities";
+        apiBaseText.textContent = API_BASE;
+      }
+    }, { once: true });
+    const RESULTS_PAGE = "sim_results.html";
+
+    // ====== ELEMENTS ======
+    const el = (id) => document.getElementById(id);
+    const city = el("city");
+    const traffic = el("traffic");
+    const sim_date = el("sim_date");
+    const sim_time = el("sim_time");
+    const tram_start = el("tram_start");
+    const tram_end = el("tram_end");
+    const num_agents = el("num_agents");
+    const drive = el("drive");
+    const cycle = el("cycle");
+    const tram = el("tram");
+    const preview = el("preview");
+    const submitBtn = el("submitBtn");
+    const saveState = el("saveState");
+    const jobIdEl = el("jobId");
+    const jobStatusEl = el("jobStatus");
+    const viewResults = el("viewResults");
+    const jobWhen = el("jobWhen");
+    const apiBaseText = el("apiBaseText");
+    const fact_pop = el("fact_pop");
+    const fact_area = el("fact_area");
+    const fact_density = el("fact_density");
+    const fact_source = el("fact_source");
+
+    apiBaseText.textContent = API_BASE;
+
+    // Pre-fill date to today (local)
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    sim_date.value = `${yyyy}-${mm}-${dd}`;
+
+    // ====== Cities loading ======
+    let CITIES = [];
+    function setFacts(c) {
+      const fx = (n)=> (n==null||Number.isNaN(+n) ? "—" : new Intl.NumberFormat().format(+n));
+      fact_pop.textContent = fx(c?.facts?.population);
+      fact_area.textContent = c?.facts?.area_km2 ? (+c.facts.area_km2).toFixed(2) : "—";
+      fact_density.textContent = c?.facts?.density_km2 ? Math.round(+c.facts.density_km2).toLocaleString() : "—";
+      fact_source.textContent = c?.facts?.source ? `Source: ${c.facts.source}` : "";
+    }
+    function populateCitySelect() {
+      city.innerHTML = "";
+      const enabled = CITIES.filter(c => c.enabled);
+      enabled.forEach((c) => {
+        const opt = document.createElement("option");
+        opt.value = c.name;
+        opt.textContent = c.name;
+        opt.dataset.slug = c.slug;
+        city.appendChild(opt);
+      });
+      if (enabled.length) {
+        city.value = enabled[0].name;
+        setFacts(enabled[0]);
+        populateStopsForCity(enabled[0]);
+      }
+    }
+    function populateStopsForCity(cityObj) {
+      const stops = Array.isArray(cityObj?.stops) ? cityObj.stops : [];
+      const opts = stops.map(s => s.name).sort((a,b)=>a.localeCompare(b));
+      const fill = (sel) => {
+        sel.innerHTML = "";
+        opts.forEach(n => {
+          const o = document.createElement("option");
+          o.value = n;
+          o.textContent = n;
+          sel.appendChild(o);
+        });
+      };
+      fill(tram_start);
+      fill(tram_end);
+      if (opts.length >= 2) {
+        tram_start.value = opts[0];
+        tram_end.value = opts[1];
+      }
+      renderPreview();
+    }
+    function getCityByName(n) {
+      return CITIES.find(c => c.name === n);
+    }
+    city.addEventListener("change", () => {
+      const c = getCityByName(city.value);
+      setFacts(c);
+      populateStopsForCity(c);
+      renderPreview();
+    });
+
+    async function loadCities() {
+      // Try API first, then static fallback, then cache
+      let urlCandidates = [CITIES_URL, "assets/data/cities.json", "cities.json"];
+      for (const url of urlCandidates) {
+        try {
+          const res = await fetch(url + (url.includes("?") ? "" : `?t=${Date.now()}`));
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) {
+              CITIES = data;
+              localStorage.setItem("CITIES_CACHE", JSON.stringify(CITIES));
+              populateCitySelect();
+              return;
+            }
+          }
+        } catch(e) { /* try next */ }
+      }
+      try {
+        const cached = JSON.parse(localStorage.getItem("CITIES_CACHE")||"[]");
+        if (cached.length) {
+          CITIES = cached;
+          populateCitySelect();
+          return;
+        }
+      } catch {}
+      alert("Could not load cities.json from API or static files. Check the API is running at the URL set in web/config/site.json.");
+    }
+
+    function rebalance() {
+      let d = parseInt(drive.value || "0", 10);
+      let c = parseInt(cycle.value || "0", 10);
+      d = isNaN(d) ? 0 : d;
+      c = isNaN(c) ? 0 : c;
+      let t = 100 - d - c;
+      if (t < 0) t = 0;
+      if (t > 100) t = 100;
+      tram.value = String(t);
+      renderPreview();
+    }
+    drive.addEventListener("input", rebalance);
+    cycle.addEventListener("input", rebalance);
+    tram.addEventListener("input", renderPreview);
+
+    function buildPayload() {
+      const c = getCityByName(city.value);
+      return {
+        city: c?.name || city.value,
+        tram_start: tram_start.value,
+        tram_end: tram_end.value,
+        num_agents: Number(num_agents.value),
+        agent_distribution: {
+          drive: Number(drive.value),
+          cycle: Number(cycle.value),
+          tram: Number(tram.value),
+        },
+        sim_date: sim_date.value,
+        sim_time: sim_time.value || "08:00",
+        traffic_level: traffic.value
+      };
+    }
+
+    function renderPreview() {
+      const payload = buildPayload();
+      preview.textContent = JSON.stringify(payload, null, 2);
+      localStorage.setItem("simulate_last", JSON.stringify(payload));
+    }
+
+    try {
+      const cached = JSON.parse(localStorage.getItem("simulate_last") || "{}");
+      if (cached && Object.keys(cached).length) {
+        traffic.value = cached.traffic_level || traffic.value;
+        sim_date.value = cached.sim_date || sim_date.value;
+        sim_time.value = cached.sim_time || sim_time.value;
+        num_agents.value = cached.num_agents || num_agents.value;
+        drive.value = (cached.agent_distribution && cached.agent_distribution.drive) || drive.value;
+        cycle.value = (cached.agent_distribution && cached.agent_distribution.cycle) || cycle.value;
+        tram.value = (cached.agent_distribution && cached.agent_distribution.tram) || tram.value;
+      }
+    } catch {}
+    renderPreview();
+
+    // Polling configuration
+    const POLL_INTERVAL_MS = Number(localStorage.POLL_INTERVAL_MS || 12000); // 12s by default
+    let pollTimer = null;
+    let countdownTimer = null;
+    submitBtn.addEventListener("click", async () => {
+      const payload = buildPayload();
+
+      if (!payload.tram_start || !payload.tram_end) { alert("Please choose tram start and end."); return; }
+      if (payload.tram_start === payload.tram_end) { alert("Tram start and end must be different."); return; }
+      if (payload.num_agents <= 0) { alert("Number of agents must be greater than 0."); return; }
+      const total = payload.agent_distribution.drive + payload.agent_distribution.cycle + payload.agent_distribution.tram;
+      if (total !== 100) { alert("Drive + Cycle + Tram must equal 100."); return; }
+
+      submitBtn.disabled = true;
+      document.getElementById("saveState").textContent = "Submitting…";
+      document.getElementById("jobStatus").textContent = "Submitting…";
+      document.getElementById("jobStatus").className = "text-muted";
+
+      try {
+        const res = await fetch(`${API_BASE}/v1/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const tx = await res.text();
+          throw new Error(tx || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        const jobId = data.job_id;
+        localStorage.setItem("last_job_id", jobId);
+        localStorage.setItem("last_job_city", city.value);
+        localStorage.setItem("last_job_agents", String(payload.num_agents));
+        document.getElementById("jobId").textContent = jobId;
+        document.getElementById("saveState").textContent = "Submitted. Polling status…";
+        document.getElementById("jobStatus").textContent = "running";
+        document.getElementById("jobStatus").className = "pill";
+        startPolling(jobId);
+      } catch (err) {
+        console.error(err);
+        document.getElementById("saveState").textContent = "Submit failed.";
+        document.getElementById("jobStatus").textContent = "error";
+        document.getElementById("jobStatus").className = "text-danger";
+        alert(`Submit failed: ${err.message || err}`);
+        submitBtn.disabled = false;
+      }
+    });
+
+    async function pollStatus(jobId) {
+      const res = await fetch(`${API_BASE}/v1/status/${jobId}`);
+      if (!res.ok) throw new Error(`Status HTTP ${res.status}`);
+      return res.json();
+    }
+
+    function startPolling(jobId) {
+      if (pollTimer) clearInterval(pollTimer);
+      if (countdownTimer) clearInterval(countdownTimer);
+
+      const updateSave = (status, serverMsg, remainingSec) => {
+        const msg = serverMsg ? `${serverMsg} ` : "Polling job status… ";
+        const tail = (remainingSec != null) ? `Latest: ${status}. Checking again in ${remainingSec}s…` : `Latest: ${status}.`;
+        document.getElementById("saveState").textContent = msg + tail;
+      };
+
+      const startCountdown = (status, serverMsg) => {
+        if (countdownTimer) clearInterval(countdownTimer);
+        let left = Math.floor(POLL_INTERVAL_MS / 1000);
+        updateSave(status, serverMsg, left);
+        countdownTimer = setInterval(() => {
+          left -= 1;
+          if (left >= 0) updateSave(status, serverMsg, left);
+          if (left <= 0) { clearInterval(countdownTimer); countdownTimer = null; }
+        }, 1000);
+      };
+
+      document.getElementById("jobWhen").textContent = new Date().toLocaleString();
+
+      const doPoll = async () => {
+        try {
+          const s = await pollStatus(jobId);
+          document.getElementById("jobStatus").textContent = s.status;
+          document.getElementById("jobStatus").className = (s.status === "complete") ? "text-success fw-semibold" : (s.status === "failed" ? "text-danger fw-semibold" : "pill");
+          if (s.message) {
+            // Prepend server message, keep interactive tail
+            startCountdown(s.status, s.message);
+          } else {
+            startCountdown(s.status, null);
+          }
+          if (s.status === "complete" || s.status === "failed") {
+            clearInterval(pollTimer);
+            if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+            submitBtn.disabled = false;
+            const link = document.getElementById("viewResults");
+            const hasArtifacts = Array.isArray(s.artifacts) && s.artifacts.length > 0;
+            if (hasArtifacts) {
+              link.style.display = "inline-block";
+              link.href = `sim_results.html?job_id=${encodeURIComponent(jobId)}`;
+            } else {
+              link.style.display = "none";
+            }
+            if (!s.message) {
+              document.getElementById("saveState").textContent = (s.status === "complete") ? (s.partial ? "Complete (partial results)." : "Complete.") : "Failed.";
+            }
+          }
+        } catch (e) {
+          // Transient errors – keep polling, but update UI
+          startCountdown("unknown", "Polling job status…");
+        }
+      };
+
+      // Immediate poll, then schedule next polls
+      doPoll();
+      pollTimer = setInterval(doPoll, POLL_INTERVAL_MS);
+    }
+
+    // Start
+    loadCities();
+  </script>
+</body>
+</html>

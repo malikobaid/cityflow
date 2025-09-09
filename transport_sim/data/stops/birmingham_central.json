@@ -1,0 +1,64 @@
+{
+  "stops": [
+    {
+      "name": "Duddeston",
+      "lat": 52.4885021,
+      "lon": -1.871357
+    },
+    {
+      "name": "Millenium Point (Temporary) [2025]",
+      "lat": 52.4809216,
+      "lon": -1.8898386
+    },
+    {
+      "name": "High Street Deritend [2026]",
+      "lat": 52.4751345,
+      "lon": -1.887108
+    },
+    {
+      "name": "Bordesley",
+      "lat": 52.4722127,
+      "lon": -1.877661
+    },
+    {
+      "name": "Birmingham Coach Station",
+      "lat": 52.4753014,
+      "lon": -1.8884997
+    },
+    {
+      "name": "Albert Street [2025]",
+      "lat": 52.4804256,
+      "lon": -1.8926295
+    },
+    {
+      "name": "Birmingham Moor Street",
+      "lat": 52.4789357,
+      "lon": -1.8919518
+    },
+    {
+      "name": "Aston",
+      "lat": 52.5044169,
+      "lon": -1.8720459
+    },
+    {
+      "name": "Bull Street",
+      "lat": 52.4820227,
+      "lon": -1.8964537
+    },
+    {
+      "name": "Corporation Street",
+      "lat": 52.48005,
+      "lon": -1.8969
+    },
+    {
+      "name": "Birmingham Snow Hill",
+      "lat": 52.4834796,
+      "lon": -1.8992405
+    },
+    {
+      "name": "Colmore Row Bus Station",
+      "lat": 52.4816248,
+      "lon": -1.8991371
+    }
+  ]
+}
