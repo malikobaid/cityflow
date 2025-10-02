@@ -69,8 +69,8 @@ function deriveApiBases(raw) {
 }
 
 async function initLayout() {
-  await loadPartial('/partials/header.html', 'siteHeader');
-  await loadPartial('/partials/footer.html', 'siteFooter');
+  await loadPartial('/partials/header.html', 'siteheader');
+  await loadPartial('/partials/footer.html', 'sitefooter');
 
   // Adjust header/footer nav links to work when site is served under /web/ locally
   try {
@@ -91,8 +91,8 @@ async function initLayout() {
         }
       });
     };
-    fixLinks('siteHeader');
-    fixLinks('siteFooter');
+    fixLinks('siteheader');
+    fixLinks('sitefooter');
   } catch {}
 
   // Load config and update UI
