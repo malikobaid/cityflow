@@ -1,0 +1,15 @@
+# Clean requirements.txt - Only packages actually imported in Python code
+
+# Core geospatial and data processing
+folium
+numpy
+pandas
+scikit-learn
+
+# API and data validation
+pydantic
+fastapi
+requests
+uvicorn
+
+openai

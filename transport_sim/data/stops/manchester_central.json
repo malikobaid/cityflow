@@ -1,0 +1,64 @@
+{
+  "stops": [
+    {
+      "name": "Withington",
+      "lat": 53.432782,
+      "lon": -2.2493129
+    },
+    {
+      "name": "Burton Road",
+      "lat": 53.4291871,
+      "lon": -2.2406146
+    },
+    {
+      "name": "West Didsbury",
+      "lat": 53.4244715,
+      "lon": -2.2360866
+    },
+    {
+      "name": "Southern Cemetery Bus Station",
+      "lat": 53.4251571,
+      "lon": -2.2540299
+    },
+    {
+      "name": "St Werburgh's Road",
+      "lat": 53.4388584,
+      "lon": -2.2656692
+    },
+    {
+      "name": "Manchester Oxford Road",
+      "lat": 53.4737916,
+      "lon": -2.2411066
+    },
+    {
+      "name": "Deansgate",
+      "lat": 53.4740505,
+      "lon": -2.2502234
+    },
+    {
+      "name": "Deansgate-Castlefield",
+      "lat": 53.4747074,
+      "lon": -2.2503671
+    },
+    {
+      "name": "Chorlton Street",
+      "lat": 53.47779235,
+      "lon": -2.2375051638115875
+    },
+    {
+      "name": "Manchester Piccadilly",
+      "lat": 53.4761284,
+      "lon": -2.2296773
+    },
+    {
+      "name": "St. Peter's Square",
+      "lat": 53.4780112,
+      "lon": -2.2433679
+    },
+    {
+      "name": "Manchester Central Coach Station",
+      "lat": 53.4781622,
+      "lon": -2.2373605
+    }
+  ]
+}

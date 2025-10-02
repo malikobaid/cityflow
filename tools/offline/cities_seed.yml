@@ -1,0 +1,33 @@
+# cities_seed.yml — starter seed for build_cities.py
+cities:
+  - name: Bournemouth
+    slug: bournemouth
+    place: "Bournemouth, Dorset, UK"
+    enable: true
+    population: 197700
+    buffer_km: 6
+    hub: "Bournemouth Station"
+
+  - name: London (Central)
+    slug: london_central
+    place: "City of Westminster, Greater London, UK"
+    enable: true
+    buffer_km: 6
+    hub: "Marble Arch Station"
+    stops:
+      - "Dorset Street"
+      - "Portman Street / Marble Arch Station"
+
+  - name: Manchester, Greater Manchester, UK
+    slug: manchester_central
+    place: "Manchester, UK"
+    enable: true
+    buffer_km: 6
+    hub: "Manchester Piccadilly"
+
+  - name: Birmingham, West Midlands, UK
+    slug: birmingham_central
+    place: "Birmingham, UK"
+    enable: true
+    buffer_km: 6
+    hub: "Birmingham Moor Street"

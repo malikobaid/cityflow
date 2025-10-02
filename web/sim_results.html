@@ -1,0 +1,418 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CityFlow • Results</title>
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="assets/css/site.css" />
+  <!-- Scripts -->
+  <script src="assets/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/alpine.min.js" defer></script>
+  <script src="assets/js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    .kpi { font-size: 1.4rem; font-weight: 700; }
+    .mapframe { width: 100%; height: 360px; border: 0; border-radius: .5rem; background: #f8f9fa; }
+    .delta-bad { color: #dc3545; font-weight: 600; }   /* increase (worse) */
+    .delta-good { color: #198754; font-weight: 600; } /* decrease (better) */
+    .codebox { background: var(--bs-dark-bg-subtle, #f8f9fa); border: 1px solid rgba(0,0,0,.08); border-radius: .5rem; padding: .75rem; max-height: 420px; overflow:auto; }
+    .list-tight .list-group-item { padding-top: .4rem; padding-bottom: .4rem; }
+    .small-muted { font-size: .9rem; color: var(--bs-secondary-color); }
+  </style>
+</head>
+<body>
+  <!-- Header injected at runtime -->
+  <div id="site-header"></div>
+
+  <main class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h1 class="h3 mb-1">Simulation Results</h1>
+        <div class="text-body-secondary">Traffic: <span id="trafficTag">—</span> · Job <span id="jobId">—</span></div>
+      </div>
+      <a href="simulate.html" class="btn btn-outline-primary">Run a simulation</a>
+    </div>
+
+    <!-- AI Insights (moved near top) -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="card-title fw-semibold mb-1">AI Insights</div>
+            <div class="small-muted">Concise reasons behind the results. Uses only this job's data.</div>
+          </div>
+          <button id="insightsBtn" class="btn btn-primary">💬 Get AI Insights</button>
+        </div>
+        <div id="insightsPanel" style="display:none; margin-top:12px;">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span class="fw-semibold">Assistant</span>
+              <span id="insightsBusy" class="text-muted small" style="display:none;">Working…</span>
+            </div>
+            <div id="insightsMessages" class="card-body" style="height: 320px; overflow-y:auto;"></div>
+            <div class="card-footer bg-white">
+              <div class="input-group">
+                <input id="insightsInput" type="text" class="form-control" placeholder="Ask a follow-up (e.g., why tram improved so much?)">
+                <button id="insightsSend" class="btn btn-primary">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI row -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title fw-semibold">Job status</div>
+            <div class="kpi" id="statusVal">—</div>
+            <div class="small-muted mt-2">Submitted <span id="submittedAt">—</span> · Finished <span id="finishedAt">—</span></div>
+            <div id="statusMsg" class="small-muted mt-1"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title fw-semibold">Agents</div>
+            <div class="kpi"><span id="agentsVal">—</span></div>
+            <div class="small-muted">1 agent ≈ <span id="ppAgent">—</span> people</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title fw-semibold">City</div>
+            <div class="kpi" id="cityVal">—</div>
+            <div class="small-muted">Population <span id="popVal">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Maps -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title fw-semibold">Baseline access map</div>
+            <iframe id="baselineMap" class="mapframe" loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title fw-semibold">Tramline scenario map</div>
+            <iframe id="tramMap" class="mapframe" loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts + Improvements -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title fw-semibold">Population-Scaled Mode Usage Comparison</div>
+            <p class="small-muted">Estimated from city population and simulated agent counts.</p>
+            <canvas id="modeChart" height="240"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title fw-semibold">Average Distance Improvements</div>
+            <div class="small-muted mb-1">Baseline → Tramline (kilometers). Negative = improvement.</div>
+            <div id="improveList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Artifacts -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="card-title fw-semibold">Artifacts</div>
+        <ul id="artifacts" class="list-group list-group-flush list-tight"></ul>
+        <div class="small-muted mt-2">Files served from the API’s <code>/files</code> mount.</div>
+      </div>
+    </div>
+
+    <!-- Raw stats -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title fw-semibold">Baseline stats (raw)</div>
+            <pre id="baselineRaw" class="codebox mb-0"></pre>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="card-title fw-semibold">Tramline stats (raw)</div>
+            <pre id="tramRaw" class="codebox mb-0"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+
+    <p class="small-muted">Results shown are from the selected job’s artifacts. If numbers look off, open the files in “Artifacts” to verify.</p>
+  </main>
+
+  <!-- Footer injected at runtime -->
+  <div id="site-footer"></div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const jobId = qs.get("job_id") || "";
+  document.getElementById("jobId").textContent = jobId || "—";
+
+  // API base (unified via site.json)
+  function getApiBase(){ return (window.SK && window.SK.api && window.SK.api.baseRoot) || "http://127.0.0.1:8000"; }
+  function getFilesBase(){ return getApiBase().replace(/\/+$/,'') + "/files"; }
+
+  async function jget(u){ const r = await fetch(u); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+  async function jpost(u, body){ const r = await fetch(u, {method:"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body||{})}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+
+  function fmtInt(x){ return (x==null?"—":Number(x).toLocaleString()); }
+  function setText(id, v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+
+  function renderArtifacts(jobId, list){
+    const ul = document.getElementById("artifacts");
+    ul.innerHTML = "";
+    (list||[]).forEach(a => {
+      const li = document.createElement("li");
+      li.className = "list-group-item";
+      const href = a.url && a.url.startsWith("http") ? a.url : `${getFilesBase()}/jobs/${jobId}/${a.name}`;
+      li.innerHTML = `<a href="${href}" target="_blank" rel="noopener">${a.name}</a>`;
+      ul.appendChild(li);
+    });
+  }
+
+  function findArt(list, name){
+    return (list||[]).find(a => a.name === name);
+  }
+
+  function loadMaps(jobId, arts){
+    const baseline = findArt(arts, "baseline_access.html");
+    const tram = findArt(arts, "tramline_access_colored.html") || findArt(arts, "tramline_access.html");
+    const baseUrl = baseline ? (baseline.url && baseline.url.startsWith("http")?baseline.url:`${getFilesBase()}/jobs/${jobId}/${baseline.name}`) : "";
+    const tramUrl = tram ? (tram.url && tram.url.startsWith("http")?tram.url:`${getFilesBase()}/jobs/${jobId}/${tram.name}`) : "";
+    if(baseUrl) document.getElementById("baselineMap").src = baseUrl;
+    if(tramUrl) document.getElementById("tramMap").src = tramUrl;
+  }
+
+  function renderImprovements(b, t){
+    try{
+      const byModeB = b.by_mode || {};
+      const byModeT = t.by_mode || {};
+      const modes = Array.from(new Set([...(Object.keys(byModeB)), ...(Object.keys(byModeT))]));
+      const rows = modes.map(m => {
+        const bavg = (byModeB[m]||{}).avg;
+        const tavg = (byModeT[m]||{}).avg;
+        const delta = (tavg!=null && bavg!=null) ? (tavg - bavg) : null;
+        return {mode:m, before:bavg, after:tavg, delta: delta};
+      }).filter(x => x.delta!=null).sort((a,b)=>a.delta - b.delta); // best (negative) first
+
+      const cont = document.getElementById("improveList");
+      cont.innerHTML = "";
+      rows.forEach(r => {
+        const row = document.createElement("div");
+        row.className = "d-flex justify-content-between border-top py-2";
+        const left = document.createElement("div");
+        left.textContent = r.mode;
+        const right = document.createElement("div");
+        const cls = (r.delta<=0) ? "delta-good" : "delta-bad";
+        const toKm = (m)=> (m/1000).toFixed(2);
+        right.innerHTML = `<span class="text-body-secondary">Baseline ${toKm(r.before)} km → Tramline ${toKm(r.after)} km</span> &nbsp; <b class="${cls}">${toKm(r.delta)} km</b>`;
+        row.appendChild(left); row.appendChild(right);
+        cont.appendChild(row);
+      });
+    }catch(e){ console.warn("improvements render error", e); }
+  }
+
+  function chartModes(ctx, b, t, people, agents){
+    try{
+      const bcounts = b.modes || {}; const tcounts = t.modes || {};
+      const modes = ["drive","tram","cycle"];
+      const hasPopScale = (people>0 && agents>0);
+      const scale = hasPopScale ? (people/agents) : 1; // fallback to agent counts
+      const dataB = modes.map(m => Math.round((bcounts[m]||0) * scale));
+      const dataT = modes.map(m => Math.round((tcounts[m]||0) * scale));
+      new Chart(ctx, {
+        type:"bar",
+        data:{ labels:["Drive","Tram","Cycle"],
+          datasets:[{label:"Baseline", data:dataB}, {label:"Tramline", data:dataT}] },
+        options:{
+          responsive:true,
+          plugins:{ legend:{position:"top"} },
+          scales:{
+            y:{
+              beginAtZero:true,
+              title:{ display:true, text: hasPopScale ? "Estimated people" : "Agent count" },
+              ticks:{ callback:(v)=>v.toLocaleString() }
+            }
+          }
+        }
+      });
+    }catch(e){ console.warn("chart render error", e); }
+  }
+
+  function pretty(obj){ return JSON.stringify(obj, null, 2); }
+
+  // ---------- AI Insights (chat-style) ----------
+  function addInsightMsg(role, html){
+    const box = document.getElementById('insightsMessages');
+    if(!box) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'mb-3';
+    const ts = document.createElement('div');
+    ts.className = 'small text-muted';
+    ts.textContent = new Date().toLocaleTimeString();
+    const bubble = document.createElement('div');
+    bubble.className = role==='user' ? 'p-3 rounded bg-primary text-white' : 'p-3 rounded bg-light';
+    bubble.innerHTML = html;
+    wrap.appendChild(ts); wrap.appendChild(bubble);
+    box.appendChild(wrap);
+    // scroll
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function setInsightsBusy(b){
+    const el = document.getElementById('insightsBusy');
+    const send = document.getElementById('insightsSend');
+    if(el) el.style.display = b ? '' : 'none';
+    if(send) send.disabled = !!b;
+  }
+
+  async function init(){
+    if(!jobId){ alert("Missing job_id in URL"); return; }
+    const API_BASE = getApiBase();
+    const st = await jget(`${API_BASE}/v1/status/${jobId}`);
+
+    setText("statusVal", st.status);
+    setText("submittedAt", st.submitted_at ? new Date(st.submitted_at).toLocaleString() : "—");
+    setText("finishedAt", st.finished_at ? new Date(st.finished_at).toLocaleString() : "—");
+    setText("trafficTag", (st.config?.traffic_level || st.config?.traffic || "—"));
+    setText("agentsVal", fmtInt(st.config?.num_agents ?? "—"));
+    setText("cityVal", (st.config?.city || "—"));
+    if(st.message){ setText("statusMsg", st.message); }
+
+    // Config + population
+    const cfgArtifact = (st.artifacts||[]).find(a=>a.name==="config.json");
+    let cfg = st.config || {};
+    try{
+      if((!cfg || !cfg.num_agents) && cfgArtifact){
+        const cfgUrl = cfgArtifact.url && cfgArtifact.url.startsWith("http")?cfgArtifact.url:`${getFilesBase()}/jobs/${jobId}/${cfgArtifact.name}`;
+        cfg = await (await fetch(cfgUrl)).json();
+      }
+    }catch{}
+    const toNum = (v)=>{ const n=Number(v); return (Number.isFinite(n) && n>0) ? n : null; };
+    let people = toNum(cfg.population || cfg.city_population);
+    const agents = toNum((cfg.num_agents!=null?cfg.num_agents:st.config?.num_agents));
+    const pplPerAgent = (people && agents) ? Math.round(people/agents) : null;
+    setText("popVal", people ? fmtInt(people) : "—");
+    setText("ppAgent", (pplPerAgent==null) ? "—" : fmtInt(pplPerAgent));
+
+    // If population missing, derive from API cities by matching city name/slug
+    if(!people && (cfg.city || st.config?.city)){
+      try{
+        const cityName = cfg.city || st.config?.city;
+        const cities = await (await fetch(`${API_BASE}/v1/cities`)).json();
+        const match = (cities||[]).find(c => c.name === cityName || c.slug === cityName);
+        const pop = toNum(match?.facts?.population);
+        if(pop){
+          people = pop;
+          setText("popVal", fmtInt(people));
+          const ppa = (people && agents) ? Math.round(people/agents) : null;
+          setText("ppAgent", ppa==null ? "—" : fmtInt(ppa));
+        }
+      }catch(e){ console.warn('failed to derive population', e); }
+    }
+
+    renderArtifacts(jobId, st.artifacts);
+    loadMaps(jobId, st.artifacts);
+
+    // Load stats JSONs
+    async function loadArtifactJson(name){
+      const a = (st.artifacts||[]).find(x=>x.name===name);
+      if(!a) return null;
+      const url = a.url && a.url.startsWith("http")?a.url:`${getFilesBase()}/jobs/${jobId}/${a.name}`;
+      const r = await fetch(url);
+      if(!r.ok) return null;
+      return r.json();
+    }
+    const bstats = await loadArtifactJson("baseline_stats.json");
+    const tstats = await loadArtifactJson("tramline_stats.json");
+
+    if(bstats) document.getElementById("baselineRaw").textContent = pretty(bstats);
+    if(tstats) document.getElementById("tramRaw").textContent = pretty(tstats);
+
+    if(bstats && tstats){
+      renderImprovements(bstats, tstats);
+      const ctx = document.getElementById("modeChart").getContext("2d");
+      chartModes(ctx, bstats, tstats, people, agents);
+    }
+
+    // AI Insights handlers
+    const insightsBtn = document.getElementById('insightsBtn');
+    const insightsPanel = document.getElementById('insightsPanel');
+    const insightsSend = document.getElementById('insightsSend');
+    const insightsInput = document.getElementById('insightsInput');
+
+    insightsBtn.addEventListener('click', async ()=>{
+      if (insightsPanel) insightsPanel.style.display = '';
+      setInsightsBusy(true);
+      try {
+        const res = await jpost(`${API_BASE}/v1/insights/${jobId}`, {});
+        const md = (res && res.summary_md) ? res.summary_md : 'Insights not available.';
+        addInsightMsg('assistant', (typeof marked!=='undefined') ? marked.parse(md) : md);
+      } catch (e) {
+        addInsightMsg('assistant', 'AI insights are not available. Configure the API or try again later.');
+      } finally { setInsightsBusy(false); }
+    });
+
+    insightsSend.addEventListener('click', async ()=>{
+      const q = (insightsInput.value || '').trim();
+      if (!q) return;
+      addInsightMsg('user', q.replace(/&/g,'&amp;').replace(/</g,'&lt;'));
+      insightsInput.value='';
+      setInsightsBusy(true);
+      try {
+        const res = await jpost(`${API_BASE}/v1/insights/${jobId}/chat`, { query: q });
+        const md = (res && res.reply_md) ? res.reply_md : 'No reply.';
+        addInsightMsg('assistant', (typeof marked!=='undefined') ? marked.parse(md) : md);
+      } catch (e) {
+        addInsightMsg('assistant', 'Chat endpoint not available. Implement POST /v1/insights/{job_id}/chat.');
+      } finally { setInsightsBusy(false); }
+    });
+
+  } // init
+
+  const ready = window.SK && window.SK.api && window.SK.api.baseRoot;
+  if (ready) {
+    init().catch(err => { console.error(err); alert("Failed to load results: " + (err?.message||err)); });
+  } else {
+    window.addEventListener('sk:config-ready', () => {
+      init().catch(err => { console.error(err); alert("Failed to load results: " + (err?.message||err)); });
+    }, { once:true });
+  }
+
+})();
+</script>
+</body>
+</html>
