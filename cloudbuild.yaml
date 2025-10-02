@@ -1,0 +1,27 @@
+# cloudbuild.yaml — build, push, and deploy to Cloud Run
+substitutions:
+  _SERVICE: "cityflow"                  # Cloud Run service name
+  _REGION: "europe-west2"               # Cloud Run region
+  _REPO: "cityflow"                     # Artifact Registry repo name
+  _IMAGE: "europe-west2-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest"
+
+steps:
+- name: gcr.io/cloud-builders/docker
+  args: ['build', '-t', '${_IMAGE}', '.']
+
+- name: gcr.io/cloud-builders/docker
+  args: ['push', '${_IMAGE}']
+
+- name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: gcloud
+  args:
+    ['run','deploy','${_SERVICE}',
+     '--image','${_IMAGE}',
+     '--region','${_REGION}',
+     '--platform','managed',
+     '--allow-unauthenticated',
+     '--port','8080',
+     '--timeout','300',
+     '--concurrency','1']
+images:
+- '${_IMAGE}'
