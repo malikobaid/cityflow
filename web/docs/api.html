@@ -11,7 +11,6 @@
   <script src="../assets/js/app.js"></script>
 </head>
 <body>
-  <div id="siteHeader"></div>
   <main class="container py-4">
     <h1 class="mb-3">API Documentation</h1>
     <p class="text-muted">This page links to the live FastAPI docs using the API base configured in <code>web/config/site.json</code>.</p>
@@ -46,39 +45,21 @@
       <li><code>POST /v1/insights/{job_id}/chat</code> — ask follow‑ups about a job</li>
     </ul>
   </main>
-  <div id="siteFooter"></div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      function render(baseRoot){
-        // Default to same-origin; avoid any localhost hardcoding
-        const base = (baseRoot || '').replace(/\/+$/, '');
-        const docsHref  = base ? `${base}/docs`  : `/docs`;
-        const redocHref = base ? `${base}/redoc` : `/redoc`;
-        const html = [
-          `<a href="${docsHref}" target="_blank" rel="noopener">${docsHref}</a> (Swagger UI)`,
-          `<br/>`,
-          `<a href="${redocHref}" target="_blank" rel="noopener">${redocHref}</a> (ReDoc)`
-        ].join('');
-        const el = document.getElementById('apiLinks');
-        if (el) el.innerHTML = html;
-      }
-      const ready = window.SK && window.SK.api && window.SK.api.baseRoot;
-      if (ready) render(window.SK.api.baseRoot);
-      window.addEventListener('sk:config-ready', (e)=>{
-        const root = e?.detail?.api?.baseRoot;
-        if (root) render(root);
-      }, { once:true });
-    });
-  </script>
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      // Force absolute paths so /docs/ doesn't prefix them
-      if (typeof loadPartial === 'function') {
-        loadPartial('/partials/header.html', 'siteHeader');
-        loadPartial('/partials/footer.html', 'siteFooter');
-      }
-    });
-  </script>
+  // Render immediately with same-origin defaults
+  (function () {
+    const base = ''; // same-origin
+    const docsHref  = `${base}/docs`;
+    const redocHref = `${base}/redoc`;
+    const html = [
+      `<a href="${docsHref}" target="_blank" rel="noopener">${docsHref}</a> (Swagger UI)`,
+      `<br/>`,
+      `<a href="${redocHref}" target="_blank" rel="noopener">${redocHref}</a> (ReDoc)`
+    ].join('');
+    const el = document.getElementById('apiLinks');
+    if (el) el.innerHTML = html;
+  })();
+</script>
 </body>
 </html>

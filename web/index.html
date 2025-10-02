@@ -49,70 +49,67 @@ function chatStore(){
   async sendToApi(){
   this.isSending = true;
   try {
+    // Send just the latest user message (simplest contract)
+    const lastUser = [...this.messages].reverse().find(m => m.role === 'user')?.content || '';
     const resp = await fetch(`${this.apiBaseUrl}/chat`, {
       method: 'POST',
       headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ messages: this.messages.map(({role, content}) => ({role, content})) })
+      body: JSON.stringify({ message: lastUser })
     });
 
-    // Handle non-2xx early
     if (!resp.ok) {
       const txt = await resp.text().catch(()=> '');
       throw new Error(`HTTP ${resp.status} ${resp.statusText} ${txt}`);
     }
 
     const data = await resp.json().catch(()=> ({}));
-    console.log('Chat API response:', data); // keep for debugging
-
-    const reply = getAssistantReply(data);
+    const reply = this.getAssistantReply(data);
     this.messages.push({
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: reply ?? '(mock) No content in reply',
+      content: reply ?? '(no content)',
       ts: Date.now()
-    });
+      });
+    } catch (err) {
+      console.error('Chat API error:', err);
+      this.messages.push({
+        id: crypto.randomUUID(),
+        role:'assistant',
+        content: 'API error. See console for details.',
+        ts: Date.now()
+      });
+    } finally {
+      this.isSending = false;
+      this.persist();
+    }
+  },
 
-  } catch (err) {
-    console.error('Chat API error:', err);
-    this.messages.push({
-      id: crypto.randomUUID(),
-      role:'assistant',
-      content: 'API error. See console for details.',
-      ts: Date.now()
-    });
-  } finally {
-    this.isSending = false;
-    this.persist();
-  }
-
-  // helper next to your store or inside it
-  function getAssistantReply(data){
+  getAssistantReply(data){
     // expected shape
     if (data?.message?.content) return data.message.content;
-
+  
     // common alternates
     if (typeof data?.reply === 'string') return data.reply;
     if (typeof data?.content === 'string') return data.content;
     if (typeof data?.text === 'string') return data.text;
-
+  
     // OpenAI-style choices
     const choiceMsg = data?.choices?.[0]?.message?.content;
     if (choiceMsg) return choiceMsg;
-
+  
     // messages array with last assistant
     const msgs = data?.messages;
     if (Array.isArray(msgs)) {
       const last = [...msgs].reverse().find(m => m.role === 'assistant') || msgs[msgs.length - 1];
       if (last?.content) return last.content;
     }
-
+  
     // plain string payload
     if (typeof data === 'string') return data;
-
+  
     // final fallback
-    return JSON.stringify(data);
-  }
-},
+    try { return JSON.stringify(data); } catch { return '(no content)'; }
+  },
 
     persist(){
       try { localStorage.setItem('cityflow.chat.history', JSON.stringify(this.messages)); } catch(_){}
@@ -130,7 +127,7 @@ function chatStore(){
 </head>
 <body>
   <!-- Header injected at runtime -->
-  <div id="siteheader"></div>
+  <div id="siteHeader"></div>
 
   <main class="container py-4">
     <!-- Hero -->
@@ -231,7 +228,7 @@ function chatStore(){
   </main>
 
   <!-- Footer injected at runtime -->
-  <div id="sitefooter"></div>
+  <div id="siteFooter"></div>
     <script>
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof loadPartial === 'function') {
