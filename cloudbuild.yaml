@@ -1,31 +1,42 @@
-# cloudbuild.yaml — build, push, and deploy to Cloud Run
+# cloudbuild.yaml — build, push, deploy
 substitutions:
-  _SERVICE: "cityflow"                  # Cloud Run service name
-  _REGION: "europe-west2"               # Cloud Run region
-  _REPO: "cityflow"                     # Artifact Registry repo name
-  _IMAGE: "europe-west2-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest"
+  _SERVICE: "cityflow"
+  _REGION: "europe-west2"
 
 steps:
 - name: gcr.io/cloud-builders/docker
-  args: ['build', '-t', '${_IMAGE}', '.']
+  args:
+    [
+      "build",
+      "-t","europe-west2-docker.pkg.dev/$PROJECT_ID/cityflow/$_SERVICE:$SHORT_SHA",
+      "-t","europe-west2-docker.pkg.dev/$PROJECT_ID/cityflow/$_SERVICE:latest",
+      "."
+    ]
 
 - name: gcr.io/cloud-builders/docker
-  args: ['push', '${_IMAGE}']
+  args: ["push","europe-west2-docker.pkg.dev/$PROJECT_ID/cityflow/$_SERVICE:$SHORT_SHA"]
+
+- name: gcr.io/cloud-builders/docker
+  args: ["push","europe-west2-docker.pkg.dev/$PROJECT_ID/cityflow/$_SERVICE:latest"]
 
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
   entrypoint: gcloud
   args:
-    ['run','deploy','${_SERVICE}',
-     '--image','${_IMAGE}',
-     '--region','${_REGION}',
-     '--platform','managed',
-     '--allow-unauthenticated',
-     '--port','8080',
-     '--timeout','300',
-     '--concurrency','1']
-images:
-- '${_IMAGE}'
+    [
+      "run","deploy","$_SERVICE",
+      "--image","europe-west2-docker.pkg.dev/$PROJECT_ID/cityflow/$_SERVICE:$SHORT_SHA",
+      "--region","$_REGION",
+      "--platform","managed",
+      "--allow-unauthenticated",
+      "--port","8080",
+      "--timeout","300",
+      "--concurrency","1"
+    ]
 
+images:
+- "europe-west2-docker.pkg.dev/$PROJECT_ID/cityflow/$_SERVICE:$SHORT_SHA"
+- "europe-west2-docker.pkg.dev/$PROJECT_ID/cityflow/$_SERVICE:latest"
+
+# (optional) avoid bucket requirement if you set a SA on the trigger
 options:
   logging: CLOUD_LOGGING_ONLY
-  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
