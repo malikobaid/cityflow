@@ -39,7 +39,7 @@ async function loadSiteConfig() {
 
 function deriveApiBases(raw) {
   const v = (raw || '').trim();
-  if (!v) return { baseRoot: '', baseV1: '' };
+  if (!v) return { baseRoot: '', baseV1: '/v1' };
   // Normalize: remove trailing slashes
   let u = v.replace(/\/+$/, '');
   // If it already ends with /v1, keep that as baseV1 and derive root

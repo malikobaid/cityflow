@@ -127,16 +127,20 @@
 
   <script>
     // ====== CONFIG (unified) ======
-    let API_BASE = (window.SK?.api?.baseRoot || "http://127.0.0.1:8000");
-    let CITIES_URL = API_BASE.replace(/\/+$/,'') + "/v1/cities";
+    // Default to same-origin. Avoid any localhost hardcoding.
+    let API_BASE = (window.SK?.api?.baseRoot || "");
+    let CITIES_URL = "/v1/cities";
+
+    // When dynamic config arrives, prefer explicit /v1 base if provided.
     window.addEventListener('sk:config-ready', (e) => {
-      const root = e?.detail?.api?.baseRoot || '';
-      if (root) {
-        API_BASE = root;
-        CITIES_URL = API_BASE.replace(/\/+$/,'') + "/v1/cities";
-        apiBaseText.textContent = API_BASE;
-      }
+      const root = e?.detail?.api?.baseRoot ?? "";
+      const v1   = e?.detail?.api?.baseV1   ?? "";
+      API_BASE   = root || "";
+      // If baseV1 is provided, use it directly, else build from baseRoot or default to same-origin
+      CITIES_URL = (v1 ? v1.replace(/\/+$/,'') : (root ? root.replace(/\/+$/,'') + "/v1" : "/v1")) + "/cities";
+      apiBaseText.textContent = API_BASE || window.location.origin;
     }, { once: true });
+
     const RESULTS_PAGE = "sim_results.html";
 
     // ====== ELEMENTS ======
@@ -230,7 +234,7 @@
 
     async function loadCities() {
       // Try API first, then static fallback, then cache
-      let urlCandidates = [CITIES_URL, "assets/data/cities.json", "cities.json"];
+      let urlCandidates = [CITIES_URL, "/assets/data/cities.json", "cities.json"];
       for (const url of urlCandidates) {
         try {
           const res = await fetch(url + (url.includes("?") ? "" : `?t=${Date.now()}`));

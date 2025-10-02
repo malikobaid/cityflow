@@ -33,7 +33,6 @@
           <li><a href="/project_docs/api.md" target="_blank" rel="noopener">API Reference</a></li>
           <li><a href="/project_docs/data_pipeline.md" target="_blank" rel="noopener">Data Pipeline</a></li>
           <li><a href="/project_docs/operations.md" target="_blank" rel="noopener">Operations & Cost</a></li>
-          <li><a href="/project_docs/changelog.md" target="_blank" rel="noopener">Changelog</a></li>
         </ul>
       </div>
     </div>
@@ -52,11 +51,14 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       function render(baseRoot){
-        const base = (baseRoot || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+        // Default to same-origin; avoid any localhost hardcoding
+        const base = (baseRoot || '').replace(/\/+$/, '');
+        const docsHref  = base ? `${base}/docs`  : `/docs`;
+        const redocHref = base ? `${base}/redoc` : `/redoc`;
         const html = [
-          `<a href="${base}/docs" target="_blank" rel="noopener">${base}/docs</a> (Swagger UI)`,
+          `<a href="${docsHref}" target="_blank" rel="noopener">${docsHref}</a> (Swagger UI)`,
           `<br/>`,
-          `<a href="${base}/redoc" target="_blank" rel="noopener">${base}/redoc</a> (ReDoc)`
+          `<a href="${redocHref}" target="_blank" rel="noopener">${redocHref}</a> (ReDoc)`
         ].join('');
         const el = document.getElementById('apiLinks');
         if (el) el.innerHTML = html;

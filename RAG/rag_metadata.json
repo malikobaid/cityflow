@@ -1,117 +1,182 @@
 {
-  "api_chunk_0": {
-    "content": "API Surface\n==========\n\nBase URL: configurable via `web/config/site.json` or `localStorage.API_BASE`.\n\nEndpoints\n---------\n- `GET /v1/cities` → list of cities (transport_sim/data/cities.json)\n- `POST /v1/submit` → create job; writes config and launches worker\n- `GET /v1/status/{job_id}` → job status + artifacts list\n- `POST /v1/insights/{job_id}` → markdown summary of baseline vs tramline\n- `POST /v1/insights/{job_id}/chat` → optional Q&A (uses LLM if configured)\n\nJob Config Example\n------------------\n```\n{\n  \"city\": \"City of Westminster, Greater London, UK\",\n  \"tram_start\": \"Dorset Street\",\n  \"tram_end\": \"Portman Street / Marble Arch Station\",\n  \"num_agents\": 300,\n  \"agent_distribution\": {\"drive\":60, \"cycle\":10, \"tram\":30},\n  \"traffic_level\": \"off-peak\",\n  \"sim_date\": \"2025-09-07\",\n  \"sim_time\": \"08:00\"\n}\n```\n\nStatus Response Shape\n---------------------\nReturns `status`, `artifacts`, optional `message`, `partial`, `missing`, and echoes `config`.",
-    "source": "project_docs\\api.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\api.md"
-  },
   "architecture_chunk_0": {
-    "content": "Architecture (Cloud‑Friendly) ============================= Goals: near‑zero idle cost, simple to deploy, credible demo. Components ---------- - Web UI: S3 + CloudFront hosting the `web/` folder (static site). - API (light): API Gateway HTTP API + Lambda for `/v1/cities`, `/v1/status`, `/v1/insights/*`. - Worker (heavy): SQS → ECS Fargate task per job for simulation runs. Reads config from S3, writes artifacts to S3, no idle cost. - Artifacts: S3 bucket (results/jobs), CloudFront distribution or pre‑signed URLs. Flow ---- 1) UI posts to `/v1/submit` → API writes job config to S3 and enqueues SQS. 2) SQS triggers ECS task → container runs sim → writes HTML/JSON stats to S3. 3) UI polls `/v1/status/{job_id}` → returns artifacts + messages. 4) Optional: `/v1/insights/*` reads stats and returns markdown summaries. Cost Controls ------------- - S3 lifecycle to expire old jobs; CloudWatch logs 7–14 days. - Small default agent counts; prebuilt city datasets to avoid runtime OSM calls. - Use HTTP API (not REST) for API Gateway.",
-    "source": "project_docs\\architecture.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\architecture.md"
+    "content": "# CityFlow — Architecture",
+    "source": "project_docs/architecture.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/architecture.md"
   },
-  "changelog_chunk_0": {
-    "content": "Changelog (highlights)\n======================\n\n2025‑09‑08\n- Cities dataset rebuilt; fixed London/Bournemouth place queries.\n- Added AI Insights endpoints with rule‑based summary and optional LLM.\n- Moved offline builder to tools/offline/.\n- UI links made relative; partials and config loading hardened.\n- AWS‑friendly architecture documented; costs minimized.",
-    "source": "project_docs\\changelog.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\changelog.md"
+  "architecture_chunk_1": {
+    "content": "## Components\n- **FastAPI app (`api/main.py`)**  \n  Registers middleware, includes routers under `/v1`, mounts `/files` and the `/` static site from `web/`.\n- **Routers (`api/routes/`)**\n  - `health.py`: liveness & basic metadata\n  - `cities.py`: available demo cities & stops\n  - `submit.py`: enqueue/start a simulation job\n  - `status.py`: poll job status & list artifacts\n  - `insights.py`: summarize simulation output, optionally LLM‑assisted\n  - `chat.py`: free‑form Q&A about results/artifacts\n- **Globals (`api/globals.py`)**\n  Declares `ROOT_DIR`, `DATA_ROOT`, `WEB_DIR`, request‑id middleware, and `_warm_start` hook.\n- **Simulation engine (`transport_sim/`)**\n  Minimal, pluggable compute that produces predictable outputs (CSV/JSON/PNG, etc.).\n- **Frontend (`web/`)**\n  Multi‑page site (`index.html`, `simulate.html`, `sim_results.html`, docs under `web/docs/`, shared assets in `web/assets/`).",
+    "source": "project_docs/architecture.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/architecture.md"
   },
-  "data_pipeline_chunk_0": {
-    "content": "Data Pipeline (Offline)\n=======================\n\nPurpose: build reproducible city datasets offline so runtime stays fast and cheap.\n\nInputs\n------\n- `tools/offline/cities_seed.yml` — cities with OSM place strings, hubs, optional preferred stops.\n\nOutputs\n-------\n- `transport_sim/data/cities.json` — canonical list consumed by UI/API.\n- `transport_sim/data/stops/<slug>.json` — optional overrides for stop coords.\n- `transport_sim/data/graphs/<slug>.gpickle` — optional precomputed graphs.\n\nUsage\n-----\n```\napi/venv-cityflow/bin/python tools/offline/build_cities.py \\\n  --seed tools/offline/cities_seed.yml \\\n  --out-web transport_sim/data/cities.json \\\n  --out-graphs transport_sim/data/graphs \\\n  --out-stops transport_sim/data/stops \\\n  --num-stops 12 --network walk\n```\n\nTips\n----\n- Ensure city `name` fields are OSM‑geocodable (we prefer the seed `place`).\n- Build single cities to a temp folder and merge to avoid touching others.",
-    "source": "project_docs\\data_pipeline.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\data_pipeline.md"
+  "architecture_chunk_2": {
+    "content": "## Request Flow\n```text\n[Browser] --(POST /v1/submit JSON)--> [FastAPI] --(run simulation)--> [Artifacts in DATA_ROOT]\n[Browser] --(GET  /v1/status/{{job}})--> [FastAPI] --(reads job state)--> JSON {status, files}\n[Browser] --(GET      /files/...)--> [Static mount]\n```",
+    "source": "project_docs/architecture.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/architecture.md"
   },
-  "deployment_plan_chunk_0": {
-    "content": "# CityFlow – AWS Deployment Plan (Cost‑First, No Code Changes Yet)\n\nThis document outlines how to deploy CityFlow to AWS in a cost‑effective, maintainable way, using static hosting for the UI, serverless for the API, and on‑demand containers for simulation jobs. This plan is approved to land the scaffolding and CI/CD next; code changes for S3 job storage will be handled in later steps.",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
+  "architecture_chunk_3": {
+    "content": "## Mount & Routing Order (Important)\n- Include **API routers first** with `prefix=\"/v1\"`.\n- Mount `/files` to `DATA_ROOT`.\n- Mount `/` to `WEB_DIR` **last**. For MPA, `html=True` serves `index.html` at `/`.",
+    "source": "project_docs/architecture.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/architecture.md"
   },
-  "deployment_plan_chunk_1": {
-    "content": "## Goals\n\n- Rename repo to `cityflow` and push this local repo to GitHub with CI/CD tied to AWS via OIDC.\n- Host the static web at `https://cityflow.obaidmalik.co.uk` via S3 + CloudFront.\n- Expose the API at `https://api.cityflow.obaidmalik.co.uk` with near‑zero idle cost.\n- Run simulations on demand using ECS Fargate tasks triggered from the API (via SQS).\n- Remove/decommission `skyraldemo.obaidmalik.co.uk` (optionally redirect to CityFlow).\n- Add a CloudWatch dashboard (and RUM) for unique visitors/day, average session time, and platform health.",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
+  "architecture_chunk_4": {
+    "content": "## Lifespan vs on_event\nUse a `lifespan` context instead of deprecated `@app.on_event(\"startup\")` for warm‑start logic.",
+    "source": "project_docs/architecture.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/architecture.md"
   },
-  "deployment_plan_chunk_2": {
-    "content": "## Current State (Given)\n\n- GitHub repo: `malikobaid/skyral_sim` (CI/CD exists for AWS)\n- AWS: ECS instance (t3.medium) running a Streamlit app\n- DNS/ACM: `skyraldemo.obaidmalik.co.uk` with certificate; wildcard `*.obaidmalik.co.uk`",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_3": {
-    "content": "## Target Architecture (High Level)\n\n- Frontend (static): S3 bucket (private), CloudFront distribution with OAC, custom domain `cityflow.obaidmalik.co.uk`.\n- API (serverless): API Gateway HTTP API → Lambda running FastAPI (via Mangum). Custom domain `api.cityflow.obaidmalik.co.uk`.\n- Jobs (compute): SQS queue → ECS Fargate task per job (no always‑on service). Task reads job config from S3, writes artifacts to S3.\n- Artifacts: S3 prefix `jobs/<job_id>/…`, served to the web via CloudFront behavior `/files/*` that points to the artifacts bucket.\n- Observability: CloudWatch Logs (API/Lambda, ECS), CloudFront metrics, CloudWatch RUM for frontend analytics.\n\nCost profile: no idle compute (API on Lambda; jobs on demand). S3+CloudFront costs are minimal.",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_4": {
-    "content": "## Phased Rollout Plan",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_5": {
-    "content": "### Phase 0 – Repository and CI/CD\n\n1) Rename GitHub repo `skyral_sim` → `cityflow`. Add this local repo as `origin`, push main.\n2) GitHub OIDC → AWS IAM role with least‑privilege for:\n   - S3 sync to web bucket; CloudFront invalidation\n   - Deploying stacks (Terraform or CDK); Lambda updates\n   - ECR push; ECS task definition updates\n   - SSM Parameter Store read\n3) Workflows (split):\n   - `web-deploy`: build/sync `web/` to S3; invalidate CloudFront\n   - `api-deploy`: package FastAPI for Lambda (zip), deploy; smoke test `/v1/health`\n   - `worker-deploy`: build+push ECR image for ECS worker; update TaskDefinition revision",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_6": {
-    "content": "### Phase 1 – Static Web (S3 + CloudFront)\n\n1) Create S3 bucket `cityflow-web` (private, block public access). Upload `web/`.\n2) CloudFront distribution:\n   - Default origin: `cityflow-web` via OAC\n   - Behaviors:\n     - Default: cache assets long (`/assets/**`), Gzip/Brotli\n     - `config/site.json` and HTML: shorter TTL (e.g., 60–300s)\n   - Custom domain: `cityflow.obaidmalik.co.uk` with ACM cert (us‑east‑1)\n3) Route 53: A/AAAA Alias records to CloudFront.",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_7": {
-    "content": "### Phase 2 – API (API Gateway + Lambda)\n\n1) Package FastAPI app with Mangum (ASGI to Lambda). No code changes to behavior.\n2) API Gateway HTTP API:\n   - Lambda integration; stage `prod`\n   - CORS allow `https://cityflow.obaidmalik.co.uk`\n   - Custom domain `api.cityflow.obaidmalik.co.uk` (regional ACM in API region)\n3) Lambda config:\n   - Env: `OPENAI_API_KEY` from SSM Parameter Store\n   - Memory/timeout tuned for insights work (e.g., 512MB/10s)\n   - Logs to CloudWatch with basic alarms on 5xx",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_8": {
-    "content": "### Phase 3 – Sim Jobs (SQS + ECS Fargate)\n\n1) SQS queue `cityflow-jobs`, with DLQ.\n2) ECR repo `cityflow-worker`; build/push image.\n3) ECS Fargate TaskDefinition `cityflow-worker`:\n   - CPU/memory e.g., 1 vCPU / 2GB (adjust per runtime)\n   - Env from SSM (API base, bucket names)\n   - Task role: S3 read/write on artifacts prefix; SQS receive/delete; SSM read\n4) Job flow (initially via API submit):\n   - API writes the merged job config to S3 and enqueues SQS with job_id + S3 key\n   - Fargate task reads config, runs sim, writes artifacts to `s3://…/jobs/<job_id>/…`\n   - Status endpoint reads S3 to report progress/artifacts\n\nNote: status/artifacts currently read local filesystem; a small code change will later switch to S3. We’ll land infra first.",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_9": {
-    "content": "### Phase 4 – DNS & Migration\n\n1) Update `config/site.json` in the web bucket: `apiBaseUrl = https://api.cityflow.obaidmalik.co.uk`.\n2) Point `cityflow.obaidmalik.co.uk` (CloudFront) and `api.cityflow.obaidmalik.co.uk` (API Gateway custom domain).\n3) Remove/decommission `skyraldemo.obaidmalik.co.uk` or add a 301 redirect to CityFlow (CloudFront function).\n4) Decommission the t3.medium instance after validation.",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_10": {
-    "content": "### Phase 5 – Observability & Analytics\n\n1) CloudWatch RUM for `cityflow.obaidmalik.co.uk`:\n   - Create RUM monitor; add snippet to the site to capture sessions, unique users, avg session duration, errors\n2) CloudFront logging (standard logs) → S3; set up Athena for ad‑hoc analysis (top pages, geo, referrers)\n3) CloudWatch Dashboard (single pane for CityFlow):\n   - RUM: UniqueVisitors/Day, Sessions, AvgSessionDuration, JS errors\n   - CloudFront: Requests, 4xx/5xx, Bytes, CacheHitRatio\n   - API (Lambda): Invocations, Duration p90/p99, Errors\n   - Jobs (ECS): Tasks started/day, Avg runtime, Task failures\n4) Alarms: spikes in 5xx (API/CloudFront), ECS task failures, Lambda errors",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_11": {
-    "content": "### Phase 6 – CI/CD Wire‑up\n\n- `web-deploy` on main push: sync to S3; CloudFront invalidation for `index.html`, `config/site.json` (and any non‑hashed assets)\n- `api-deploy` on tags or main: build zip, update Lambda; run canary against `/v1/health`\n- `worker-deploy` on tags: build/push ECR image; register TaskDefinition revision\n- GitHub OIDC role limited to the stacks and buckets for CityFlow only",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_12": {
-    "content": "## AWS Resources (Summary)\n\n- S3: web bucket; artifacts bucket (or single bucket with prefixes)\n- CloudFront: distribution with OAC, default origin (web) + behavior `/files/*` (artifacts)\n- ACM: us‑east‑1 cert for `cityflow.obaidmalik.co.uk`; regional cert for `api.cityflow.obaidmalik.co.uk`\n- Route 53: A/AAAA alias for both domains\n- API: API Gateway HTTP API, Lambda function, logs/alarms\n- Jobs: SQS, DLQ, ECR repo, ECS Cluster (Fargate), TaskDefinition, IAM roles\n- Observability: CloudWatch Logs, CloudWatch RUM, CloudFront logs (to S3), Athena, Dashboard",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_13": {
-    "content": "## Secrets & Config\n\n- SSM Parameter Store (Region: same as API/ECS): `OPENAI_API_KEY`, optional knobs\n- Site config in S3: `web/config/site.json` with `apiBaseUrl` set to the API domain",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_14": {
-    "content": "## Cost Notes\n\n- S3 + CloudFront: low monthly cost; pay per GB and requests\n- API on Lambda + API GW: ~$0 idle; pay per request and duration\n- Jobs on ECS Fargate: pay per task runtime only; optional Fargate Spot for further savings\n- Avoid NAT by running Fargate with public IP, or add S3 VPC endpoint if private subnets are preferred",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_15": {
-    "content": "## Acceptance & Smoke Tests\n\n1) Web: `https://cityflow.obaidmalik.co.uk/web/index.html` renders; nav links work under CF\n2) API: `GET /v1/health` 200; `GET /v1/cities` returns list\n3) Submit/Status (initially local artifacts): round‑trip works; later S3‑backed status\n4) Results page: loads artifacts from `/files/jobs/<job_id>/…`; insights endpoint responds\n5) RUM data present; Dashboard shows visitors/day and avg session time",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "deployment_plan_chunk_16": {
-    "content": "## Next Steps (Step‑by‑Step)\n\n1) Confirm Terraform vs CDK preference and AWS regions (CF must use us‑east‑1 for cert)\n2) Create GitHub OIDC role + minimal IAM policies\n3) Stand up S3 + CloudFront + Route 53 + ACM; wire `cityflow.obaidmalik.co.uk`\n4) Package/deploy API (Lambda + API GW) at `api.cityflow.obaidmalik.co.uk`\n5) Create ECR/SQS/ECS resources (no code changes yet); validate a dry‑run task\n6) Enable CloudWatch RUM and create the CityFlow dashboard\n7) Migrate status/artifacts in the API to S3 (small code change); update UI if needed (or return absolute URLs)\n8) Decommission old ECS instance/`skyraldemo` and set redirect (optional)\n\n---\n\nPrepared for incremental execution. After confirmation, we will implement Phase 0 (OIDC + IaC scaffold) and Phase 1 (static web) first, then proceed.",
-    "source": "project_docs\\deployment_plan.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\deployment_plan.md"
-  },
-  "operations_chunk_0": {
-    "content": "Operations & Cost\n=================\n\nDefaults for a portfolio demo:\n- Small agent counts by default.\n- Precomputed datasets (no OSM at runtime).\n- S3 lifecycle: expire `jobs/*` after 7–14 days.\n- CloudWatch logs retention: 7–14 days.\n\nRunbooks\n--------\n- Job fails with geocoder error → verify city `name` is a polygon place; try a safer variant (e.g., “Bournemouth, UK”).\n- Missing artifacts → check worker task logs; ensure S3 permissions.\n- UI not loading assets → verify CloudFront behavior and web/ as site root.",
-    "source": "project_docs\\operations.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\operations.md"
+  "architecture_chunk_5": {
+    "content": "## Secrets & Config\n- `OPENAI_API_KEY` via Secret Manager → env var.\n- Optional `web/config/site.json` to point to a different API domain. Defaults are same‑origin `/v1`.",
+    "source": "project_docs/architecture.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/architecture.md"
   },
   "overview_chunk_0": {
-    "content": "CityFlow — Transport Simulation Demo =================================== CityFlow is a lightweight demo that simulates city mobility and visualizes the impact of adding a tramline segment. It’s optimized for a portfolio demo: a static web UI, small API surface, and an on‑demand worker for heavier runs. Highlights --------- - Configure city, traffic, and tramline endpoints from the browser. - Fast baseline vs. scenario runs with interactive maps and stats. - “AI Insights” summary (rule‑based; optional LLM if configured). - Reproducible data pipeline (offline builder) for cities + stops. Quickstart (local) ------------------ 1) Open `web/index.html` in a static server (e.g., `python -m http.server`). 2) Optionally set `localStorage.API_BASE` to your API base (default mock). 3) Run a simulation; open the results page for maps, stats, and insights. Screenshots ----------- Add images of the simulate + results pages here for recruiters. Docs index ---------- - Architecture: architecture.md - API: api.md - Data pipeline: data_pipeline.md - Operations & cost: operations.md - Changelog: changelog.md",
-    "source": "project_docs\\overview.md",
-    "file_path": "E:\\Dropbox\\PortfolioWebsite\\Github\\cityflow-main\\cityflow-main\\project_docs\\overview.md"
+    "content": "# CityFlow — Overview\n\n**Date:** 2025-10-02\n\nCityFlow is a lightweight transport simulation + AI insights demo designed for rapid, reliable deployment on Google Cloud Run. It bundles a FastAPI backend, a multi‑page static frontend, and a simple simulation engine into a single container.",
+    "source": "project_docs/overview.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/overview.md"
+  },
+  "overview_chunk_1": {
+    "content": "## Goals\n- Demonstrate an end‑to‑end “data → simulation → insights” flow with minimal infra.\n- Be cloud‑portable and cheap at idle (scale to zero).\n- Provide a small but realistic API surface with jobs, status polling, and generated artifacts.\n- Support RAG‑style documentation search via local project docs (this folder).",
+    "source": "project_docs/overview.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/overview.md"
+  },
+  "overview_chunk_2": {
+    "content": "## High‑level Features\n- **FastAPI** service with namespaced endpoints under `/v1`.\n- **Multi‑page frontend** served by the same process (no second web server).\n- **Job orchestration** pattern for simulations: submit → poll → results.\n- **Files mount** at `/files` for downloading generated results.\n- **Optional LLM** features for insights/chat with `OPENAI_API_KEY`.\n- **Cloud Run**: one container, scale to zero, cold start tolerant.",
+    "source": "project_docs/overview.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/overview.md"
+  },
+  "overview_chunk_3": {
+    "content": "## Typical User Journey\n1. User opens `/simulate.html` and selects a city/parameters.\n2. Client calls `POST /v1/submit` to start a simulation.\n3. Client polls `GET /v1/status/{job_id}` until `status=finished`.\n4. Client opens `/sim_results.html?job_id=...` to view/download artifacts.\n5. User requests `/v1/insights` (and optionally `/v1/chat`) for explanation/Q&A.",
+    "source": "project_docs/overview.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/overview.md"
+  },
+  "operations_chunk_0": {
+    "content": "# CityFlow — Operations & Cost",
+    "source": "project_docs/operations.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/operations.md"
+  },
+  "operations_chunk_1": {
+    "content": "## Deployment\n- **Platform**: Google Cloud Run\n- **Image**: pushed to Artifact Registry (region: europe‑west2)\n- **Service**: one container for API + static site, port 8080\n- **Domain**: optional custom domain mapping, Google‑managed TLS",
+    "source": "project_docs/operations.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/operations.md"
+  },
+  "operations_chunk_2": {
+    "content": "## Recommended Settings\n- CPU: 1 vCPU, Memory: 1 GiB\n- Timeout: 300 s\n- Concurrency: 1–2 (simulation can be CPU‑bound)\n- Min instances: 0 (scale to zero)\n- Ingress: all; Auth: allow unauthenticated (for public demo)",
+    "source": "project_docs/operations.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/operations.md"
+  },
+  "operations_chunk_3": {
+    "content": "## CI/CD\n- Cloud Build trigger on `main`, build with Dockerfile, push to Artifact Registry, then `gcloud run deploy`.\n- Image tag: commit SHA (plus `latest` convenience tag).\n- Retention policy: keep last N images; prune daily.",
+    "source": "project_docs/operations.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/operations.md"
+  },
+  "operations_chunk_4": {
+    "content": "## Secrets\n- `OPENAI_API_KEY` in Secret Manager; grant `secretAccessor` to runtime service account.\n- Attach to service via `--set-secrets OPENAI_API_KEY=openai-api-key:latest`.",
+    "source": "project_docs/operations.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/operations.md"
+  },
+  "operations_chunk_5": {
+    "content": "## Costs (ballpark)\n- **Scale to zero**: ~$0 at idle.\n- **Per sim** (a few minutes, 1 vCPU/1Gi): fractions of a cent.\n- **Always warm (min=1)**: ~ $18–20/month in europe‑west2.\n- **Artifact Registry**: minimal for a few images; set retention.\n- **Egress**: negligible for small artifacts.",
+    "source": "project_docs/operations.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/operations.md"
+  },
+  "operations_chunk_6": {
+    "content": "## Monitoring & Logs\n- Cloud Run logs (stdout/stderr) → Cloud Logging.\n- Add a simple `/v1/health` with version + uptime.\n- Track job runtimes and error counts; alert on spike or 5xx rate.",
+    "source": "project_docs/operations.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/operations.md"
+  },
+  "operations_chunk_7": {
+    "content": "## Rollback\n- Keep at least one previous revision with 0% traffic.\n- Roll traffic back instantly if a bad deploy ships.",
+    "source": "project_docs/operations.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/operations.md"
+  },
+  "api_chunk_0": {
+    "content": "# CityFlow — API Reference\n\nBase URL: `/v1`",
+    "source": "project_docs/api.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/api.md"
+  },
+  "api_chunk_1": {
+    "content": "## Health\n**GET** `/v1/health` → 200\n```json\n{ \"name\": \"cityflow\", \"version\": \"0.3.0\", \"uptime_s\": 123.4 }\n```",
+    "source": "project_docs/api.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/api.md"
+  },
+  "api_chunk_2": {
+    "content": "## Cities\n**GET** `/v1/cities`\n- **200** JSON body:\n```json\n{\n  \"cities\": [\n    { \"id\": \"bournemouth\", \"name\": \"Bournemouth\", \"stops\": [ {\"id\":\"...\",\"name\":\"...\"}, ... ] },\n    { \"id\": \"london\", \"name\": \"London\", \"stops\": [ ... ] }\n  ]\n}\n```",
+    "source": "project_docs/api.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/api.md"
+  },
+  "api_chunk_3": {
+    "content": "## Submit Simulation\n**POST** `/v1/submit`\n- **Request** (JSON):\n```json\n{\n  \"city_id\": \"bournemouth\",\n  \"trips\": 2000,\n  \"modes\": [\"drive\", \"cycle\", \"tram\"],\n  \"start_time\": \"2025-10-01T08:00:00Z\",\n  \"seed\": 123\n}\n```\n- **Response** 202 Accepted:\n```json\n{ \"job_id\": \"cf-20251001-8f3a2c\", \"status\": \"queued\" }\n```",
+    "source": "project_docs/api.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/api.md"
+  },
+  "api_chunk_4": {
+    "content": "## Status\n**GET** `/v1/status/{{job_id}}`\n- **Response**:\n```json\n{\n  \"job_id\": \"cf-20251001-8f3a2c\",\n  \"status\": \"finished\",\n  \"artifacts\": [\n    { \"name\": \"baseline_stats.json\", \"href\": \"/files/jobs/cf-20251001-8f3a2c/baseline_stats.json\" },\n    { \"name\": \"tramline_stats.json\", \"href\": \"/files/jobs/cf-20251001-8f3a2c/tramline_stats.json\" },\n    { \"name\": \"baseline_access.html\", \"href\": \"/files/jobs/cf-20251001-8f3a2c/baseline_access.html\" },\n    { \"name\": \"tramline_access.html\", \"href\": \"/files/jobs/cf-20251001-8f3a2c/tramline_access.html\" }\n  ],\n  \"metrics\": { \"runtime_s\": 81.5, \"agents\": 2000 }\n}\n```",
+    "source": "project_docs/api.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/api.md"
+  },
+  "api_chunk_5": {
+    "content": "## Insights\n**POST** `/v1/insights`\n- **Request**:\n```json\n{\n  \"job_id\": \"cf-20251001-8f3a2c\",\n  \"questions\": [\"What changed after the tramline?\"],\n  \"llm\": true\n}\n```\n- **Response** (Markdown):\n```json\n{ \"markdown\": \"### Summary\\n- ...\" }\n```",
+    "source": "project_docs/api.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/api.md"
+  },
+  "api_chunk_6": {
+    "content": "## Chat\n**POST** `/v1/chat`\n- **Request**:\n```json\n{\n  \"job_id\": \"cf-20251001-8f3a2c\",\n  \"message\": \"Explain the modal split changes\",\n  \"context\": [\"summary.json\"]\n}\n```\n- **Response**:\n```json\n{ \"reply\": \"The tramline increased ...\" }\n```",
+    "source": "project_docs/api.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/api.md"
+  },
+  "Obaid_Malik_Info__chunk_0": {
+    "content": "# Obaid Malik CV (Markdown Extracted) Obaid Malik Applied AI/ML Leader|Systems Builder|Digital Twins & Whole-System Simulation Turning Research, ML & AI into Market-Ready Multi-Domain Systems PhD Computer Science (2016)|MSc AI (2010)|MSc Eng. Mgmt (2009)|BIT (2005) Summary I am not just an applied scientist, data scientist, or ML/AI engineer. I am asystems builderwho transforms advanced AI, machine learning, research, and digital twins intomarket-ready multi-domain systems. With a PhD in Computer Science and over 10 years of applied experience, I specialise in whole-system simulation, IoT analytics, and cloud-native ML deployments delivering impact: •Housing, Energy & Digital Twins:Delivered ML and digital twin solutions at UK national scale (mould risk detection, fuel poverty, thermal comfort models). Improved detection latency by 90% and accuracy by 26%, strengthening customer trust and contributing to multi-million funding success. •Maritime:Designed agent-based simulations for global shipping decarbonisation, informing Shell’s long-term CO 2strategy and published at AAMAS 2022. •IoT & Infrastructure:Developed an ultra-low-power smart water meter with Gaussian Process leak detection, cutting detection latency from days to",
+    "source": "project_docs/Obaid_Malik_Info_.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/Obaid_Malik_Info_.md"
+  },
+  "Obaid_Malik_Info__chunk_1": {
+    "content": "hours and extending PhD research into a commercial prototype. Experience Data ScientistNov 2021 – Apr 2025 Switchee Ltd. London, UK •Applied ML, optimisation, and simulation techniques to IoT data from 15K+ devices in social housing, tackling challenges such asfuel poverty,mould risk, andheat loss. Business outcomes tied directly to health risk reduction, retrofit ROI, and ESG impact. •Designed and deployed digital twins and forecasting models, including: •Mould detection enginecombining physical models, humidity normalisation, and pattern mining. •Fuel poverty classifiersusing rebound patterns, lag features, and calibrated thresholds. •Heat loss and comfort modelsvia clustering, regression, and twin-based simulations. •Retrofit recommenderlinking risk models to ventilation/insulation upgrades. •Partnered with product managers, engineers, and housing providers to translate modelling into operational tools and dashboards, ensuring stakeholder adoption. •Impact: •Reduced mould detection time from over 360 days to under 14 days across 15K+ homes, enabling early intervention. •Fuel poverty modelling featured inNEA MagazineandNEA Fuel Poverty Focus Report, and presented in a public webinar talk. •Insights from modelling contributed to retrofit investment planning and",
+    "source": "project_docs/Obaid_Malik_Info_.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/Obaid_Malik_Info_.md"
+  },
+  "Obaid_Malik_Info__chunk_2": {
+    "content": "facilitated Switchee’s£5M+ funding raise. •Delivered production-ready models on AWS (SageMaker, Glue, Lambda) with full monitoring and automa- tion. Research Fellow (AI, IoT, Data Science)Nov 2016 – Nov 2021 University of Southampton Southampton, UK •Delivered applied ML, optimisation, and simulation projects across energy, water, transport, and defence. Supervised PhD students and led multi-disciplinary collaborations with industry partners. •Shell Decarbonisation (2020–21): Designed and executed large-scale maritime network simulations using agent-based models,fleet CO 2predictors, andmixed-integer optimisation with CPLEX. Modelled the impact of carbon tax policies on routing and operational efficiency.Impact:Informed Shell’s long-term decarbonisation strategy; findings published at AAMAS 2022. •Zero Power Smart Meter (2019–20): Developed anultra-low-power IoT water meterwith onboard energy harvesting and efficient wireless transmission. CreatedGaussian Process leak detectionmodels for sparse time-series data.Impact:Reduced leak detection latency from days to hours; extended and commercialised PhD research. •BAE ML Consultant (2019): Built a securevoice analytics and 3D routingprototype integrating Google Cloud Speech, speaker segmentation, and NLP.Impact:Delivered a working system under NDA, demonstrating novel ML for mission planning under operational constraints.",
+    "source": "project_docs/Obaid_Malik_Info_.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/Obaid_Malik_Info_.md"
+  },
+  "Obaid_Malik_Info__chunk_3": {
+    "content": "•Chariot Agile (2016–17): Created an open-source sensing and analytics platform for housing energy pilots. Developed custom firmware, forecasting algorithms, and dashboards.Impact:Deployed across multiple pilot homes; open-sourced on GitHub, informing wider housing energy trials. •ReFresh CO 2(2016–17): Investigated cognitive impacts of indoor air quality using EEG signals and Python- based time-series modelling.Impact:Published findings on bioRxiv, contributing to further indoor air quality research. Research Programmer (IoT, Data Science, Energy Dashboards)Nov 2010 – Dec 2012 University of Southampton Southampton, UK •Building Banter (2010–12): Contributed to a UCL-led study on behavioural energy interventions in industrial settings. Designed and deployed agamified energy dashboardusing PHP, JavaScript, and MySQL with live sensor scoring to influence energy-saving behaviour. Conducted experiments to evaluate user engagement and impact. •Built and programmedGPRS-enabled ATMega microcontrollerswith RTC scheduling and low-power design, integrated with environmental sensors to provide reliable real-time monitoring. •Impact:Achieved measurable energy reductions through behaviour-change initiatives; project data and results contributed directly to UCL-led research on energy feedback systems. Skills •Optimisation & Modelling:Whole-system energy modelling, Digital twins, Agent-based",
+    "source": "project_docs/Obaid_Malik_Info_.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/Obaid_Malik_Info_.md"
+  },
+  "Obaid_Malik_Info__chunk_4": {
+    "content": "simulation, Time-series forecasting, Mixed-integer programming •Cloud & MLOps:AWS (SageMaker, Lambda, Glue, S3), Docker, GitHub Actions, CI/CD, Grafana •Programming & Data:Python, SQL, Bash; Pandas, NumPy, Dask, PostgreSQL, InfluxDB, Spark •ML/AI:scikit-learn, XGBoost, MLflow, etc.; optimisation and simulation-based ML •Visualisation & UI:Streamlit, Dash, Plotly, Matplotlib •Networking & IoT Systems:NetworkX, OSMnx, GeoPandas; IoT sensor integration •Collaboration & Product:Technical leadership, Stakeholder engagement, Requirement gathering, Cross-functional teamwork Education •PhD Computer Science, University of Southampton (2011–2016) •MSc Artificial Intelligence, University of Southampton (2009–2010) •MSc Engineering Management, UET Taxila (2007–2009) •BIT, National University of Sciences and Technology (2001–2005) •Additional training:IBM AI Engineering Professional Certificate (Coursera, in progress); SQL (Udemy, 2024); Generative AI (LinkedIn, 2023); Project Management (Udemy, 2023)",
+    "source": "project_docs/Obaid_Malik_Info_.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/Obaid_Malik_Info_.md"
+  },
+  "Obaid_Malik_Info__chunk_5": {
+    "content": "## Contact\n-------\n\n- Maintainer: Obaid Malik\n- Website: https://obaidmalik.co.uk\n- LinkedIn: https://linkedin.com/in/malikobaid1\n- Contact: malikobaid@gmail.com",
+    "source": "project_docs/Obaid_Malik_Info_.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/Obaid_Malik_Info_.md"
+  },
+  "data_pipeline_chunk_0": {
+    "content": "# CityFlow — Data Pipeline",
+    "source": "project_docs/data_pipeline.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/data_pipeline.md"
+  },
+  "data_pipeline_chunk_1": {
+    "content": "## Inputs\n- **Cities metadata**: static JSON/CSV in repo (sample networks and stops).\n- **Simulation parameters**: user inputs from `simulate.html` (trips, modes, seed, time, etc.).",
+    "source": "project_docs/data_pipeline.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/data_pipeline.md"
+  },
+  "data_pipeline_chunk_2": {
+    "content": "## Processing\n1. Validate inputs.\n2. Spin up a lightweight simulation run (single process).\n3. Generate outputs:\n   - `summary.json`: top‑level figures (counts, runtimes, mode shares).\n   - `routes.csv`: per‑agent or aggregated flows.\n   - `chart.png` or `*.html`: quick visuals for the UI.\n4. Persist under `DATA_ROOT/jobs/{{job_id}}/`.",
+    "source": "project_docs/data_pipeline.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/data_pipeline.md"
+  },
+  "data_pipeline_chunk_3": {
+    "content": "## Outputs\n- Served via `/files/jobs/{{job_id}}/...` static mount.\n- Listed by `/v1/status/{{job_id}}` with both artifact names and `href`s.",
+    "source": "project_docs/data_pipeline.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/data_pipeline.md"
+  },
+  "data_pipeline_chunk_4": {
+    "content": "## Observability (optional)\n- Basic logging (request id middleware) with per‑job timing.\n- Add Cloud Logging labels (job_id) for easier filtering.\n- If using LLM features, redact PII from prompts before logging.",
+    "source": "project_docs/data_pipeline.md",
+    "file_path": "/Users/obaidmalik/Dropbox/PortfolioWebsite/Github/cityflow-main/cityflow-main/project_docs/data_pipeline.md"
   }
 }

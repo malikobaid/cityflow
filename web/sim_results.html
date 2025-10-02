@@ -182,8 +182,14 @@
   document.getElementById("jobId").textContent = jobId || "—";
 
   // API base (unified via site.json)
-  function getApiBase(){ return (window.SK && window.SK.api && window.SK.api.baseRoot) || "http://127.0.0.1:8000"; }
-  function getFilesBase(){ return getApiBase().replace(/\/+$/,'') + "/files"; }
+  function getApiBase(){
+    // Default to same-origin (no hardcoded localhost). If config provides a baseRoot, use it.
+    return (window.SK && window.SK.api && window.SK.api.baseRoot) || "";
+  }
+  function getFilesBase(){
+    // Files are mounted at /files on the same origin.
+    return "/files";
+  }
 
   async function jget(u){ const r = await fetch(u); if(!r.ok) throw new Error(await r.text()); return r.json(); }
   async function jpost(u, body){ const r = await fetch(u, {method:"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body||{})}); if(!r.ok) throw new Error(await r.text()); return r.json(); }

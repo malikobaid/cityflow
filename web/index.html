@@ -24,7 +24,7 @@ function chatStore(){
       } catch(_) {}
 
       // Use unified API base (auto-appends /v1 if missing)
-      this.apiBaseUrl = (window.SK?.api?.baseV1 || '').trim();
+      this.apiBaseUrl = (window.SK?.api?.baseV1 || '/v1').trim();
       window.addEventListener('sk:config-ready', (e) => {
         const v1 = e?.detail?.api?.baseV1 || '';
         if (v1) this.apiBaseUrl = v1.trim();
