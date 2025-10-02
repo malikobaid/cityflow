@@ -4,7 +4,7 @@ from api.globals import CITIES_PATH
 
 router = APIRouter()
 
-@router.get("/v1/cities")
+@router.get("/cities")
 def get_cities():
     """Get list of available cities."""
     with open(CITIES_PATH, "r", encoding="utf-8") as f:

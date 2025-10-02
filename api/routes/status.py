@@ -9,7 +9,7 @@ from api.globals import job_store, JOBS_ROOT, MAX_STATUS_WAIT_SEC, _list_artifac
 
 router = APIRouter()
 
-@router.get("/v1/status/{job_id}", response_model=StatusResponse)
+@router.get("/status/{job_id}", response_model=StatusResponse)
 def get_status(job_id: str):
     """Get status of a simulation job."""
     job = job_store.get_job(job_id)

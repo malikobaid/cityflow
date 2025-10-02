@@ -37,7 +37,7 @@ from .models import ChatRequest, ChatResponse, ChatMessage
 # Job store instance
 job_store = STORE
 
-# Repo root; API package lives under /mock_api
+# Repo root; API package lives under /api
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_ROOT = ROOT_DIR / "local_data"
 JOBS_ROOT = DATA_ROOT / "jobs"

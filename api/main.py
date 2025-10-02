@@ -41,6 +41,13 @@ app.include_router(status.router,  prefix="/v1", tags=["status"])
 app.include_router(insights.router, prefix="/v1", tags=["insights"])
 app.include_router(chat.router,    prefix="/v1", tags=["chat"])
 
-# Files + web last
+for r in app.router.routes:
+    try:
+        methods = ",".join(sorted(r.methods)) if hasattr(r, "methods") else ""
+        print(f"ROUTE {methods:10s} {r.path}")
+    except Exception:
+        pass
+
+# Static mounts LAST
 app.mount("/files", StaticFiles(directory=str(DATA_ROOT)), name="files")
-app.mount("/", StaticFiles(directory=str(WEB_DIR), html=False), name="web")
+app.mount("/", StaticFiles(directory=str(WEB_DIR), html=True), name="web")

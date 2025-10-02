@@ -8,7 +8,7 @@ log = logging.getLogger("cityflow.api")
 
 router = APIRouter()
 
-@router.post("/v1/chat", response_model=ChatResponse)
+@router.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
     """
     Chat endpoint: accepts {messages:[{role,content}...]} and returns

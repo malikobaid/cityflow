@@ -13,7 +13,7 @@ from api.globals import (
 
 router = APIRouter()
 
-@router.post("/v1/insights/{job_id}")
+@router.post("/insights/{job_id}")
 def get_insights(job_id: str):
     """Get insights for a completed job."""
     job = job_store.get_job(job_id)
@@ -91,7 +91,7 @@ def get_insights(job_id: str):
         pass
     return {"summary_md": md, "job_id": job_id, "cached": False}
 
-@router.post("/v1/insights/{job_id}/chat")
+@router.post("/insights/{job_id}/chat")
 def insights_chat(job_id: str, req: InsightsChatRequest):
     """Chat about insights for a specific job."""
     job = job_store.get_job(job_id)

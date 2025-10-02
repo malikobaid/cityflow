@@ -12,7 +12,7 @@ from api.globals import job_store, TRANS_SIM_DIR, CONFIG_ROOT, JOBS_ROOT
 
 router = APIRouter()
 
-@router.post("/v1/submit", response_model=SubmitResponse)
+@router.post("/submit", response_model=SubmitResponse)
 def submit_job(request: SubmitRequest):
     """Submit a new simulation job."""
 
