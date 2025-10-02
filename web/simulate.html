@@ -23,7 +23,7 @@
 </head>
 <body class="bg-light">
   <!-- Header injected at runtime -->
-  <div id="site-header"></div>
+  <div id="siteHeader"></div>
 
   <main class="container my-4">
     <h1 class="mb-3">Agent Simulation Configuration</h1>
@@ -123,7 +123,7 @@
   </main>
 
   <!-- Footer injected at runtime -->
-  <div id="site-footer"></div>
+  <div id="siteFooter"></div>
 
   <script>
     // ====== CONFIG (unified) ======
@@ -133,11 +133,18 @@
 
     // When dynamic config arrives, prefer explicit /v1 base if provided.
     window.addEventListener('sk:config-ready', (e) => {
+      const isLocalhost = (u) => /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?/i.test((u||''));
       const root = e?.detail?.api?.baseRoot ?? "";
       const v1   = e?.detail?.api?.baseV1   ?? "";
-      API_BASE   = root || "";
-      // If baseV1 is provided, use it directly, else build from baseRoot or default to same-origin
-      CITIES_URL = (v1 ? v1.replace(/\/+$/,'') : (root ? root.replace(/\/+$/,'') + "/v1" : "/v1")) + "/cities";
+
+      // Use configured base only if it is NOT localhost; otherwise same-origin
+      API_BASE = (root && !isLocalhost(root)) ? root : "";
+
+      const baseV1 = (v1 && !isLocalhost(v1))
+        ? v1.replace(/\/+$/,'')
+        : (API_BASE ? API_BASE.replace(/\/+$/,'') + "/v1" : "/v1");
+
+      CITIES_URL = baseV1 + "/cities";
       apiBaseText.textContent = API_BASE || window.location.origin;
     }, { once: true });
 
@@ -168,7 +175,7 @@
     const fact_density = el("fact_density");
     const fact_source = el("fact_source");
 
-    apiBaseText.textContent = API_BASE;
+    apiBaseText.textContent = API_BASE || window.location.origin;
 
     // Pre-fill date to today (local)
     const today = new Date();
@@ -430,6 +437,14 @@
 
     // Start
     loadCities();
+  </script>
+    <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof loadPartial === 'function') {
+        loadPartial('/partials/header.html', 'siteHeader');
+        loadPartial('/partials/footer.html', 'siteFooter');
+      }
+    });
   </script>
 </body>
 </html>

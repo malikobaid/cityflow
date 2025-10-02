@@ -23,11 +23,17 @@ function chatStore(){
         this.messages = Array.isArray(saved) ? saved : [];
       } catch(_) {}
 
-      // Use unified API base (auto-appends /v1 if missing)
-      this.apiBaseUrl = (window.SK?.api?.baseV1 || '/v1').trim();
+      // Prefer configured baseV1 unless it points to localhost; otherwise use same-origin /v1
+      const cfgV1 = (window.SK?.api?.baseV1 || '').trim();
+      const isLocalhost = (u) => /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?/i.test(u || '');
+      this.apiBaseUrl = (cfgV1 && !isLocalhost(cfgV1)) ? cfgV1 : '/v1';
+
       window.addEventListener('sk:config-ready', (e) => {
-        const v1 = e?.detail?.api?.baseV1 || '';
-        if (v1) this.apiBaseUrl = v1.trim();
+        const v1 = (e?.detail?.api?.baseV1 || '').trim();
+        if (v1 && !isLocalhost(v1)) {
+          this.apiBaseUrl = v1;
+        }
+        // else keep same-origin /v1
       }, { once: true });
     },
 
@@ -124,7 +130,7 @@ function chatStore(){
 </head>
 <body>
   <!-- Header injected at runtime -->
-  <div id="site-header"></div>
+  <div id="siteheader"></div>
 
   <main class="container py-4">
     <!-- Hero -->
@@ -225,6 +231,15 @@ function chatStore(){
   </main>
 
   <!-- Footer injected at runtime -->
-  <div id="site-footer"></div>
+  <div id="sitefooter"></div>
+    <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof loadPartial === 'function') {
+        // Use absolute paths to avoid /docs/ or other subpath prefixing
+        loadPartial('/partials/header.html', 'siteHeader');
+        loadPartial('/partials/footer.html', 'siteFooter');
+      }
+    });
+  </script>
 </body>
 </html>

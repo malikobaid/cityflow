@@ -25,7 +25,7 @@
 </head>
 <body>
   <!-- Header injected at runtime -->
-  <div id="site-header"></div>
+  <div id="siteHeader"></div>
 
   <main class="container py-4">
     <div class="d-flex align-items-center justify-content-between mb-3">
@@ -173,7 +173,7 @@
   </main>
 
   <!-- Footer injected at runtime -->
-  <div id="site-footer"></div>
+  <div id="siteFooter"></div>
 
 <script>
 (function(){
@@ -420,5 +420,14 @@
 
 })();
 </script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof loadPartial === 'function') {
+        // Use absolute paths to avoid /docs/ or other subpath prefixing
+        loadPartial('/partials/header.html', 'siteHeader');
+        loadPartial('/partials/footer.html', 'siteFooter');
+      }
+    });
+  </script>
 </body>
 </html>

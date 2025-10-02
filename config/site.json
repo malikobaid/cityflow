@@ -1,5 +1,5 @@
 {
-  "apiBaseUrl": "http://localhost:8000/v1",
+  "apiBaseUrl": "",
   "featureFlags": {
     "chatEnabled": true,
     "simulateEnabled": true,

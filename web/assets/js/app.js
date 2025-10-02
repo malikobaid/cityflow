@@ -1,9 +1,25 @@
 // web/assets/js/app.js
 // make config available to page scripts
 
-async function loadPartial(containerId, url) {
-  const container = document.getElementById(containerId);
+// Load an HTML partial into a container. Accepts either
+//   loadPartial('/partials/header.html', 'siteHeader')  // (path, targetId)
+// or
+//   loadPartial('siteHeader', '/partials/header.html')  // (targetId, path)
+async function loadPartial(a, b) {
+  let path, targetId;
+  // Heuristic: if first arg looks like a URL/path or ends with .html, treat it as path
+  if (typeof a === 'string' && (a.includes('/') || /\.html?$/i.test(a))) {
+    path = a; targetId = b;
+  } else {
+    targetId = a; path = b;
+  }
+  if (!targetId || !path) return;
+
+  const container = document.getElementById(String(targetId));
   if (!container) return;
+
+  // Force absolute path so pages under subpaths (e.g., /docs/) still work
+  const url = path.startsWith('/') ? path : ('/' + path.replace(/^\/+/, ''));
 
   try {
     const resp = await fetch(url);
@@ -53,8 +69,8 @@ function deriveApiBases(raw) {
 }
 
 async function initLayout() {
-  await loadPartial("site-header", "partials/header.html");
-  await loadPartial("site-footer", "partials/footer.html");
+  await loadPartial('/partials/header.html', 'siteHeader');
+  await loadPartial('/partials/footer.html', 'siteFooter');
 
   // Adjust header/footer nav links to work when site is served under /web/ locally
   try {
@@ -75,8 +91,8 @@ async function initLayout() {
         }
       });
     };
-    fixLinks('site-header');
-    fixLinks('site-footer');
+    fixLinks('siteHeader');
+    fixLinks('siteFooter');
   } catch {}
 
   // Load config and update UI
