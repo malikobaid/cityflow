@@ -290,11 +290,11 @@ def load_lightweight_graph(city_name: str) -> Optional[LightweightGraph]:
 
     if not (nodes_path.exists() and edges_path.exists()):
         log.warning(f"Lightweight graph files not found for {city_name}")
+        print(f"Graph files not found for {city_name} at {nodes_path} and {edges_path}")
         return None
-
     try:
         # Load nodes
-        
+        print(f"Loading nodes from {nodes_path}")
         with gzip.open(nodes_path, 'rt', encoding='utf-8') as f:
             nodes_raw = json.load(f)
         # Coerce node IDs back to ints because JSON object keys are strings
@@ -316,6 +316,7 @@ def load_lightweight_graph(city_name: str) -> Optional[LightweightGraph]:
                 continue
 
         log.info(f"Loaded lightweight graph for {city_name}: {len(nodes)} nodes, {len(edges)} edges")
+        print(f"Loaded lightweight graph for {city_name}: {len(nodes)} nodes, {len(edges)} edges")
         return LightweightGraph(nodes, edges)
 
     except Exception as e:

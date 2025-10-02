@@ -54,6 +54,8 @@ def load_city(city_name="Bournemouth, UK"):
     """
     from .lightweight_graph import load_city_graph
 
+    print(f"Loading city graph for: {city_name}")
+
     # Map city names to graph file names
     city_name_map = {
         "Bournemouth, UK": "bournemouth",
@@ -67,10 +69,14 @@ def load_city(city_name="Bournemouth, UK"):
     # Try exact match first
     graph_name = city_name_map.get(city_name)
 
+    print(f"Resolved graph name: {graph_name}")
+
     if graph_name is None:
         # Fallback to normalized name
         normalized = city_name.lower().replace(", uk", "").replace(" ", "_").replace("city_of_", "").replace("greater_london", "central")
         graph_name = normalized
+
+        print(f"Using normalized graph name: {graph_name}")
 
     # Try to load lightweight graph
     graph = load_city_graph(graph_name)
