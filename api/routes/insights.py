@@ -51,7 +51,8 @@ def get_insights(job_id: str):
                 messages=[
                     {"role": "system", "content": (
                         "You are a transport analyst. Be concise and explanatory. "
-                        "Explain reasons behind changes, not just metrics."
+                        "Show summary of results in a table"
+                        "Explain reasons behind changes, Agent behaviour and not just metrics."
                         ""
                     )},
                     {"role": "user", "content": (

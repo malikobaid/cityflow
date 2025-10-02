@@ -54,7 +54,9 @@ function chatStore(){
     const resp = await fetch(`${this.apiBaseUrl}/chat`, {
       method: 'POST',
       headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ message: lastUser })
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: lastUser }]
+      })
     });
 
     if (!resp.ok) {

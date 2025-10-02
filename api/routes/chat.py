@@ -14,9 +14,10 @@ def chat(req: ChatRequest):
     Chat endpoint: accepts {messages:[{role,content}...]} and returns
     { "message": { "role": "assistant", "content": "..." } }
     """
+    print(req)
     try:
         user_text = req.messages[-1].content
-
+       
         # Get RAG context for the query
         rag_context = _get_rag_context(user_text)
 

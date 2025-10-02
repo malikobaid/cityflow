@@ -384,7 +384,7 @@
       if (insightsPanel) insightsPanel.style.display = '';
       setInsightsBusy(true);
       try {
-        const res = await jpost(`${API_BASE}/v1/insights`, { job_id: jobId });
+        const res = await jpost(`${API_BASE}/v1/insights/${encodeURIComponent(jobId)}`, {});
         const md = (res && res.summary_md) ? res.summary_md : 'Insights not available.';
         addInsightMsg('assistant', (typeof marked!=='undefined') ? marked.parse(md) : md);
       } catch (e) {
@@ -399,11 +399,11 @@
       insightsInput.value='';
       setInsightsBusy(true);
       try {
-        const res = await jpost(`${API_BASE}/v1/chat`, { job_id: jobId, message: q });
+        const res = await jpost(`${API_BASE}/v1/insights/${encodeURIComponent(jobId)}/chat`, { query: q });
         const md = (res && res.reply_md) ? res.reply_md : 'No reply.';
         addInsightMsg('assistant', (typeof marked!=='undefined') ? marked.parse(md) : md);
       } catch (e) {
-        addInsightMsg('assistant', 'Chat endpoint not available. Ensure POST /v1/chat is deployed.');
+        addInsightMsg('assistant', 'Chat endpoint not available. Ensure POST /v1/insights/{job_id}/chat is deployed.');
       } finally { setInsightsBusy(false); }
     });
 

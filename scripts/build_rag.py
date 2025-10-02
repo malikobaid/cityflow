@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 # Paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-PROJECT_DOCS_DIR = PROJECT_ROOT / "project_docs"
+PROJECT_DOCS_DIR = PROJECT_ROOT / "web" / "project_docs"
 RAG_DIR = PROJECT_ROOT / "RAG"
 
 # Ensure RAG directory exists

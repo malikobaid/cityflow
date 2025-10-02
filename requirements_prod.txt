@@ -13,3 +13,5 @@ requests
 uvicorn
 
 openai
+faiss-cpu
+numpy
