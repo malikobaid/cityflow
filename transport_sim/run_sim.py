@@ -106,7 +106,14 @@ def main():
     print(f"Using config: {config_path}")
     print(f"Writing outputs to: {outdir}")
 
-    config_raw = load_config(str(config_path))
+    try:
+        config_raw = load_config(str(config_path))
+    except Exception as e:
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config_raw = json.load(f)
+        except Exception as e:
+            print(f"Error loading config: {e}")
     # Normalize traffic key
     traffic_level = config_raw.get("traffic", config_raw.get("traffic_level", "off-peak"))
 
