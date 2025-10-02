@@ -7,8 +7,7 @@ import argparse
 from pathlib import Path
 
 # Ensure transport_sim package imports work when called from elsewhere
-THIS_DIR = Path(__file__).resolve().parent                  # .../transport_sim
-BASE_DIR = THIS_DIR
+BASE_DIR = Path(__file__).resolve().parent                  # .../transport_sim
 ROOT_DIR = BASE_DIR.parent                                   # project root
 if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
@@ -118,6 +117,12 @@ def main():
     num_agents = int(config_raw.get("num_agents", 300))
     agent_distribution = config_raw.get("agent_distribution", {"drive":60, "cycle":10, "tram":30})
 
+    print(f"City: {city_name}")
+    print(f"Traffic level: {traffic_level}")
+    print(f"Num agents: {num_agents}")
+    print(f"Agent distribution: {agent_distribution}")
+    print(f"Tramline: {tram_start} - {tram_end}")
+
     # Scenario: if not provided, derive from start/end
     if "scenarios" in config_raw and "tramline_extension" in config_raw["scenarios"]:
         scenario = config_raw["scenarios"]["tramline_extension"]
@@ -128,22 +133,27 @@ def main():
         length = 300
         scenario = {"tram_stops": tram_stops, "length": length}
 
+    print(f"Scenario tram stops: {tram_stops}")
+    print(f"Scenario length: {length}m")    
     # Tram coords lookup: prefer helper in city_loader if present; fallback to cities.json
     try:
         tram_coords_lookup = get_tram_lookup_for_city(city_name)
     except Exception:
         tram_coords_lookup = tram_lookup_from_cities(city_name)
 
+    print(f"Tram stops with coords: { {n: tram_coords_lookup.get(n) for n in tram_stops} }")
     # Load graph and adjust for traffic
     G_base = load_city(city_name)
 
+    print(f"Loaded city graph with {len(G_base.nodes) if hasattr(G_base, 'nodes') else len(G_base.node_ids)} nodes")
+    print(f" - Approx {G_base.num_edges()} edges")
     # Get traffic-adjusted matrix for LightweightGraph
     adj_matrix = None
     if isinstance(G_base, LightweightGraph):
         adj_matrix = G_base.get_traffic_adjusted_matrix(traffic_level)
 
     G_base = adjust_for_traffic(G_base, traffic_level)
-
+    print(f"Adjusted graph for traffic level '{traffic_level}'")
     # Pick hub: prefer config, else cities.json's hub, else tram_start
     hub_name = config_raw.get("hub")
     if not hub_name:
@@ -155,7 +165,11 @@ def main():
     if not hub_name:
         hub_name = tram_start or tram_end
 
+    print(f"Using hub: {hub_name}")
+
     hub = get_hub_node(G_base, hub_name)
+
+    print(f"Hub node ID: {hub}")
     # Check if hub exists in graph (works for both LightweightGraph and NetworkX)
     if hasattr(G_base, 'nodes') and hub not in G_base.nodes:
         raise ValueError("Hub node not in undirected graph.")
