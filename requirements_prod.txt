@@ -5,6 +5,7 @@ folium
 numpy
 pandas
 scikit-learn
+geopy
 
 # API and data validation
 pydantic
