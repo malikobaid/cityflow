@@ -153,7 +153,7 @@ def main():
     G_base = load_city(city_name)
 
     print(f"Loaded city graph with {len(G_base.nodes) if hasattr(G_base, 'nodes') else len(G_base.node_ids)} nodes")
-    print(f" Approx {len(G_base.edges} edges")
+    print(f" Approx {len(G_base.edges)} edges")
     # Get traffic-adjusted matrix for LightweightGraph
     adj_matrix = None
     if isinstance(G_base, LightweightGraph):
