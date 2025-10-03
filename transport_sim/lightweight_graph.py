@@ -55,22 +55,25 @@ class LightweightGraph:
     """Lightweight graph representation using numpy arrays and KDTree."""
 
     def __init__(self, nodes: Dict[int, Dict], edges: List[Dict]):
+        print(f"Initializing LightweightGraph with {len(nodes)} nodes and {len(edges)} edges")
         self.nodes = nodes
         self.edges = edges
         self.node_ids = list(nodes.keys())
         self.node_count = len(self.node_ids)
-
+        print(f"Total nodes: {self.node_count}")    
         # Build coordinate arrays for KDTree
         self.node_coords = np.array([
             [nodes[node_id]['lon'], nodes[node_id]['lat']]  # [lon, lat] for KDTree
             for node_id in self.node_ids
         ])
-
+        print(f"Node coordinates shape: {self.node_coords.shape}")
+        
         # Build KDTree for nearest neighbor lookup
         self.kdtree = KDTree(self.node_coords)
-
+        print("KDTree built for nearest node lookup")
         # Build adjacency matrix for shortest path algorithms
         self._build_adjacency_matrix()
+        print("Adjacency matrix built for shortest path calculations")
 
     def _build_adjacency_matrix(self):
         """Build scipy sparse adjacency matrix from edges."""
@@ -317,7 +320,15 @@ def load_lightweight_graph(city_name: str) -> Optional[LightweightGraph]:
 
         log.info(f"Loaded lightweight graph for {city_name}: {len(nodes)} nodes, {len(edges)} edges")
         print(f"Loaded lightweight graph for {city_name}: {len(nodes)} nodes, {len(edges)} edges")
-        return LightweightGraph(nodes, edges)
+        lw_graph = None
+        try:
+            lw_graph =  LightweightGraph(nodes, edges)
+        except Exception as e:
+            print(f"Error initializing LightweightGraph: {e}")
+        
+        return lw_graph
+        
+
 
     except Exception as e:
         log.error(f"Failed to load lightweight graph for {city_name}: {e}")
