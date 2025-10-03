@@ -75,53 +75,57 @@ class LightweightGraph:
         self._build_adjacency_matrix()
         print("Adjacency matrix built for shortest path calculations")
 
+    
     def _build_adjacency_matrix(self):
-        """Build scipy sparse adjacency matrix from edges."""
-        # Create node index mapping
+        """Build a CSR sparse adjacency matrix from edges (always sparse by default)."""
         node_to_idx = {node_id: idx for idx, node_id in enumerate(self.node_ids)}
 
-        # For large graphs, use a more memory-efficient approach
-        if self.node_count > 50000:  # Threshold for large graphs
-            print(f"Large graph detected ({self.node_count} nodes), using memory-efficient pathfinding")
-            self.sparse_adj = self._build_sparse_adjacency_matrix(node_to_idx)
-        else:
-            # Use dense matrix for smaller graphs
-            self.adj_matrix = np.zeros((self.node_count, self.node_count))
+        # If you really want a dense matrix for tiny graphs, set a low threshold:
+        use_dense = (self.node_count <= 1000) and (os.getenv("CF_FORCE_SPARSE", "0") != "1")
 
-            # Fill adjacency matrix - only include edges with valid nodes
+        if use_dense:
+            # Dense only for tiny graphs; use float32 to halve memory
+            self.adj_matrix = np.zeros((self.node_count, self.node_count), dtype=np.float32)
             valid_edges = 0
             for edge in self.edges:
                 u, v = edge['u'], edge['v']
                 if u in node_to_idx and v in node_to_idx:
                     length = edge['length']
-                    u_idx, v_idx = node_to_idx[u], node_to_idx[v]
-                    self.adj_matrix[u_idx, v_idx] = length
-                    self.adj_matrix[v_idx, u_idx] = length  # Assume undirected
+                    ui, vi = node_to_idx[u], node_to_idx[v]
+                    self.adj_matrix[ui, vi] = length
+                    self.adj_matrix[vi, ui] = length  # undirected
                     valid_edges += 1
-
-            print(f"Built dense adjacency matrix with {valid_edges} valid edges out of {len(self.edges)} total edges")
-            # Convert to sparse matrix for efficiency
+            print(f"Built dense adjacency (float32) with {valid_edges} valid edges out of {len(self.edges)} total edges")
             self.sparse_adj = csr_matrix(self.adj_matrix)
+        else:
+            # Always-safe path for Cloud Run and real city graphs
+            self.sparse_adj = self._build_sparse_adjacency_matrix(node_to_idx)
 
     def _build_sparse_adjacency_matrix(self, node_to_idx):
-        """Build sparse adjacency matrix for large graphs to avoid memory issues."""
-        from scipy.sparse import lil_matrix
-
-        # Use LIL format for efficient construction
-        adj_lil = lil_matrix((self.node_count, self.node_count), dtype=np.float32)
-
+        """Build CSR adjacency using COO assembly (fast) and convert to CSR."""
+        rows = []
+        cols = []
+        data = []
         valid_edges = 0
+
         for edge in self.edges:
             u, v = edge['u'], edge['v']
             if u in node_to_idx and v in node_to_idx:
                 length = edge['length']
-                u_idx, v_idx = node_to_idx[u], node_to_idx[v]
-                adj_lil[u_idx, v_idx] = length
-                adj_lil[v_idx, u_idx] = length  # Assume undirected
+                ui, vi = node_to_idx[u], node_to_idx[v]
+                # undirected → add both directions
+                rows.append(ui); cols.append(vi); data.append(length)
+                rows.append(vi); cols.append(ui); data.append(length)
                 valid_edges += 1
 
-        print(f"Built sparse adjacency matrix with {valid_edges} valid edges out of {len(self.edges)} total edges")
-        return adj_lil.tocsr()
+        n = self.node_count
+        # dtype: choose float64 for maximum numerical parity; float32 halves memory
+        rows = np.asarray(rows, dtype=np.int32)
+        cols = np.asarray(cols, dtype=np.int32)
+        data = np.asarray(data, dtype=np.float64)
+
+        print(f"Built sparse adjacency vectors: edges={len(self.edges)}, valid_pairs={valid_edges*2}, nodes={n}")
+        return csr_matrix((data, (rows, cols)), shape=(n, n))
 
     def nearest_node(self, lon: float, lat: float) -> Optional[int]:
         """
