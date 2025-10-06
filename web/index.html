@@ -1,132 +1,134 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CityFlow • Landing</title>
   <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
   <link rel="stylesheet" href="assets/css/site.css" />
-    <!-- Scripts -->
+  <!-- Scripts -->
   <script src="assets/js/bootstrap.bundle.min.js"></script>
   <script src="assets/js/alpine.min.js" defer></script>
   <script src="assets/js/app.js"></script>
-  
+
   <script>
-function chatStore(){
-  return {
-    messages: [], inputText: '', isSending: false, apiBaseUrl: '',
-    init(){
-      try {
-        const KEY = 'cityflow.chat.history';
-        let saved = [];
-        try { saved = JSON.parse(localStorage.getItem(KEY)||'[]'); } catch {}
-        this.messages = Array.isArray(saved) ? saved : [];
-      } catch(_) {}
+    function chatStore() {
+      return {
+        messages: [], inputText: '', isSending: false, apiBaseUrl: '',
+        init() {
+          try {
+            const KEY = 'cityflow.chat.history';
+            let saved = [];
+            try { saved = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { }
+            this.messages = Array.isArray(saved) ? saved : [];
+          } catch (_) { }
 
-      // Prefer configured baseV1 unless it points to localhost; otherwise use same-origin /v1
-      const cfgV1 = (window.SK?.api?.baseV1 || '').trim();
-      const isLocalhost = (u) => /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?/i.test(u || '');
-      this.apiBaseUrl = (cfgV1 && !isLocalhost(cfgV1)) ? cfgV1 : '/v1';
+          // Prefer configured baseV1 unless it points to localhost; otherwise use same-origin /v1
+          const cfgV1 = (window.SK?.api?.baseV1 || '').trim();
+          const isLocalhost = (u) => /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?/i.test(u || '');
+          this.apiBaseUrl = (cfgV1 && !isLocalhost(cfgV1)) ? cfgV1 : '/v1';
 
-      window.addEventListener('sk:config-ready', (e) => {
-        const v1 = (e?.detail?.api?.baseV1 || '').trim();
-        if (v1 && !isLocalhost(v1)) {
-          this.apiBaseUrl = v1;
+          window.addEventListener('sk:config-ready', (e) => {
+            const v1 = (e?.detail?.api?.baseV1 || '').trim();
+            if (v1 && !isLocalhost(v1)) {
+              this.apiBaseUrl = v1;
+            }
+            // else keep same-origin /v1
+          }, { once: true });
+        },
+
+        addUser() {
+          const text = (this.inputText || '').trim();
+          if (!text) return;
+          this.messages.push({ id: crypto.randomUUID(), role: 'user', content: text, ts: Date.now() });
+          this.inputText = '';
+          this.persist();
+          this.sendToApi();
+        },
+
+        async sendToApi() {
+          this.isSending = true;
+          try {
+            // Send just the latest user message (simplest contract)
+            const lastUser = [...this.messages].reverse().find(m => m.role === 'user')?.content || '';
+            const resp = await fetch(`${this.apiBaseUrl}/chat`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                messages: [{ role: 'user', content: lastUser }]
+              })
+            });
+
+            if (!resp.ok) {
+              const txt = await resp.text().catch(() => '');
+              throw new Error(`HTTP ${resp.status} ${resp.statusText} ${txt}`);
+            }
+
+            const data = await resp.json().catch(() => ({}));
+            const reply = this.getAssistantReply(data);
+            this.messages.push({
+              id: crypto.randomUUID(),
+              role: 'assistant',
+              content: reply ?? '(no content)',
+              ts: Date.now()
+            });
+          } catch (err) {
+            console.error('Chat API error:', err);
+            this.messages.push({
+              id: crypto.randomUUID(),
+              role: 'assistant',
+              content: 'API error. See console for details.',
+              ts: Date.now()
+            });
+          } finally {
+            this.isSending = false;
+            this.persist();
+          }
+        },
+
+        getAssistantReply(data) {
+          // expected shape
+          if (data?.message?.content) return data.message.content;
+
+          // common alternates
+          if (typeof data?.reply === 'string') return data.reply;
+          if (typeof data?.content === 'string') return data.content;
+          if (typeof data?.text === 'string') return data.text;
+
+          // OpenAI-style choices
+          const choiceMsg = data?.choices?.[0]?.message?.content;
+          if (choiceMsg) return choiceMsg;
+
+          // messages array with last assistant
+          const msgs = data?.messages;
+          if (Array.isArray(msgs)) {
+            const last = [...msgs].reverse().find(m => m.role === 'assistant') || msgs[msgs.length - 1];
+            if (last?.content) return last.content;
+          }
+
+          // plain string payload
+          if (typeof data === 'string') return data;
+
+          // final fallback
+          try { return JSON.stringify(data); } catch { return '(no content)'; }
+        },
+
+        persist() {
+          try { localStorage.setItem('cityflow.chat.history', JSON.stringify(this.messages)); } catch (_) { }
+        },
+
+        clear() {
+          this.messages = [];
+          this.persist();
         }
-        // else keep same-origin /v1
-      }, { once: true });
-    },
-
-    addUser(){
-      const text = (this.inputText || '').trim();
-      if (!text) return;
-      this.messages.push({ id: crypto.randomUUID(), role:'user', content:text, ts:Date.now() });
-      this.inputText = '';
-      this.persist();
-      this.sendToApi();
-    },
-
-  async sendToApi(){
-  this.isSending = true;
-  try {
-    // Send just the latest user message (simplest contract)
-    const lastUser = [...this.messages].reverse().find(m => m.role === 'user')?.content || '';
-    const resp = await fetch(`${this.apiBaseUrl}/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({
-        messages: [{ role: 'user', content: lastUser }]
-      })
-    });
-
-    if (!resp.ok) {
-      const txt = await resp.text().catch(()=> '');
-      throw new Error(`HTTP ${resp.status} ${resp.statusText} ${txt}`);
+      }
     }
-
-    const data = await resp.json().catch(()=> ({}));
-    const reply = this.getAssistantReply(data);
-    this.messages.push({
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: reply ?? '(no content)',
-      ts: Date.now()
-      });
-    } catch (err) {
-      console.error('Chat API error:', err);
-      this.messages.push({
-        id: crypto.randomUUID(),
-        role:'assistant',
-        content: 'API error. See console for details.',
-        ts: Date.now()
-      });
-    } finally {
-      this.isSending = false;
-      this.persist();
-    }
-  },
-
-  getAssistantReply(data){
-    // expected shape
-    if (data?.message?.content) return data.message.content;
-  
-    // common alternates
-    if (typeof data?.reply === 'string') return data.reply;
-    if (typeof data?.content === 'string') return data.content;
-    if (typeof data?.text === 'string') return data.text;
-  
-    // OpenAI-style choices
-    const choiceMsg = data?.choices?.[0]?.message?.content;
-    if (choiceMsg) return choiceMsg;
-  
-    // messages array with last assistant
-    const msgs = data?.messages;
-    if (Array.isArray(msgs)) {
-      const last = [...msgs].reverse().find(m => m.role === 'assistant') || msgs[msgs.length - 1];
-      if (last?.content) return last.content;
-    }
-  
-    // plain string payload
-    if (typeof data === 'string') return data;
-  
-    // final fallback
-    try { return JSON.stringify(data); } catch { return '(no content)'; }
-  },
-
-    persist(){
-      try { localStorage.setItem('cityflow.chat.history', JSON.stringify(this.messages)); } catch(_){}
-    },
-
-    clear(){
-      this.messages = [];
-      this.persist();
-    }
-  }
-}
-</script>
+  </script>
 
 
 </head>
+
 <body>
   <!-- Header injected at runtime -->
   <div id="siteHeader"></div>
@@ -135,10 +137,21 @@ function chatStore(){
     <!-- Hero -->
     <section id="hero" class="py-4">
       <div class="row align-items-center g-4">
-        <div class="col-lg-7">
-          <h1 class="display-5 fw-semibold mb-3">Agent Based Transport Simulation App</h1>
-          <p class="lead text-muted mb-4">Analyse the effects of adding a new tram line in a city. Configure a city slice, run agent based routing, and review results.</p>
-          <p class="lead text-muted mb-4">Want to know more about the Agent Based Transport Simulation App? Ask the inbuilt AI assistant below. Built on precomulted RAG from project documents using OpenAI</p>
+        <div class="col-lg-12">
+          <h1 class="display-5 fw-semibold mb-3">Agent Based Transport Simulation</h1>
+          <p class="lead text-muted mb-4">Analyse the effects of adding a new tram line in a city. Configure a city
+            slice, run agent based routing, and review results.</p>
+          <p class="lead text-muted mb-4">
+
+            <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" fill="currentColor" class="bi bi-openai"
+              viewBox="0 0 20 20">
+              <path
+                d="M14.949 6.547a3.94 3.94 0 0 0-.348-3.273 4.11 4.11 0 0 0-4.4-1.934A4.1 4.1 0 0 0 8.423.2 4.15 4.15 0 0 0 6.305.086a4.1 4.1 0 0 0-1.891.948 4.04 4.04 0 0 0-1.158 1.753 4.1 4.1 0 0 0-1.563.679A4 4 0 0 0 .554 4.72a3.99 3.99 0 0 0 .502 4.731 3.94 3.94 0 0 0 .346 3.274 4.11 4.11 0 0 0 4.402 1.933c.382.425.852.764 1.377.995.526.231 1.095.35 1.67.346 1.78.002 3.358-1.132 3.901-2.804a4.1 4.1 0 0 0 1.563-.68 4 4 0 0 0 1.14-1.253 3.99 3.99 0 0 0-.506-4.716m-6.097 8.406a3.05 3.05 0 0 1-1.945-.694l.096-.054 3.23-1.838a.53.53 0 0 0 .265-.455v-4.49l1.366.778q.02.011.025.035v3.722c-.003 1.653-1.361 2.992-3.037 2.996m-6.53-2.75a2.95 2.95 0 0 1-.36-2.01l.095.057L5.29 12.09a.53.53 0 0 0 .527 0l3.949-2.246v1.555a.05.05 0 0 1-.022.041L6.473 13.3c-1.454.826-3.311.335-4.15-1.098m-.85-6.94A3.02 3.02 0 0 1 3.07 3.949v3.785a.51.51 0 0 0 .262.451l3.93 2.237-1.366.779a.05.05 0 0 1-.048 0L2.585 9.342a2.98 2.98 0 0 1-1.113-4.094zm11.216 2.571L8.747 5.576l1.362-.776a.05.05 0 0 1 .048 0l3.265 1.86a3 3 0 0 1 1.173 1.207 2.96 2.96 0 0 1-.27 3.2 3.05 3.05 0 0 1-1.36.997V8.279a.52.52 0 0 0-.276-.445m1.36-2.015-.097-.057-3.226-1.855a.53.53 0 0 0-.53 0L6.249 6.153V4.598a.04.04 0 0 1 .019-.04L9.533 2.7a3.07 3.07 0 0 1 3.257.139c.474.325.843.778 1.066 1.303.223.526.289 1.103.191 1.664zM5.503 8.575 4.139 7.8a.05.05 0 0 1-.026-.037V4.049c0-.57.166-1.127.476-1.607s.752-.864 1.275-1.105a3.08 3.08 0 0 1 3.234.41l-.096.054-3.23 1.838a.53.53 0 0 0-.265.455zm.742-1.577 1.758-1 1.762 1v2l-1.755 1-1.762-1z">
+              </path>
+            </svg>
+            <b>OpenAI Enabled:</b> Want to know more about the Agent Based Transport Simulation App? Ask the inbuilt AI assistant
+            below. Built on precomulted RAG from project documents using OpenAI
+          </p>
           <div class="d-flex gap-2">
             <a class="btn btn-primary btn-lg" href="simulate.html">Run a simulation</a>
           </div>
@@ -160,13 +173,15 @@ function chatStore(){
             </div>
             <div class="card-body" style="height: 380px; overflow-y: auto;" id="chat-messages" aria-live="polite">
               <template x-if="messages.length === 0">
-                <div id="chat-empty" class="text-muted">No messages yet. Ask about how to set up a simulation or where to find results.</div>
+                <div id="chat-empty" class="text-muted">No messages yet. Ask about how to set up a simulation or where
+                  to find results.</div>
               </template>
 
               <template x-for="m in messages" :key="m.id">
                 <div class="mb-3">
                   <div class="small text-muted" x-text="new Date(m.ts).toLocaleTimeString()"></div>
-                  <div class="p-3 rounded" :class="m.role==='user' ? 'bg-primary text-white' : 'bg-light'" x-text="m.content"></div>
+                  <div class="p-3 rounded" :class="m.role==='user' ? 'bg-primary text-white' : 'bg-light'"
+                    x-text="m.content"></div>
                 </div>
               </template>
 
@@ -176,8 +191,10 @@ function chatStore(){
             </div>
             <div class="card-footer bg-white">
               <div class="input-group">
-                <input id="chat-input" type="text" class="form-control" placeholder="Type your question..." x-model="inputText" @keydown.enter.prevent="addUser()" />
-                <button id="chat-send" class="btn btn-primary" @click="addUser()" :disabled="isSending || !inputText.trim()">Send</button>
+                <input id="chat-input" type="text" class="form-control" placeholder="Type your question..."
+                  x-model="inputText" @keydown.enter.prevent="addUser()" />
+                <button id="chat-send" class="btn btn-primary" @click="addUser()"
+                  :disabled="isSending || !inputText.trim()">Send</button>
               </div>
             </div>
           </div>
@@ -190,7 +207,8 @@ function chatStore(){
               <div class="card h-100">
                 <div class="card-body">
                   <h5 class="card-title">Start with presets</h5>
-                  <p class="card-text">Jump to popular areas and defaults for quick runs. You can tweak everything later.</p>
+                  <p class="card-text">Jump to popular areas and defaults for quick runs. You can tweak everything
+                    later.</p>
                   <a href="simulate.html#presets" class="btn btn-outline-primary btn-sm">Open presets</a>
                 </div>
               </div>
@@ -199,7 +217,8 @@ function chatStore(){
               <div class="card h-100">
                 <div class="card-body">
                   <h5 class="card-title">How it works</h5>
-                  <p class="card-text">A static UI that will call serverless APIs for job submission, status, and chat.</p>
+                  <p class="card-text">A static UI that will call serverless APIs for job submission, status, and chat.
+                  </p>
                   <a href="docs/api.html" class="btn btn-outline-secondary btn-sm">View API contract</a>
                 </div>
               </div>
@@ -209,7 +228,8 @@ function chatStore(){
                 <div class="card-body">
                   <h5 class="card-title">Latest updates</h5>
                   <p class="card-text">See recent changes in the repo and deployment notes.</p>
-                  <a href="https://github.com/malikobaid" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">GitHub</a>
+                  <a href="https://github.com/malikobaid" class="btn btn-outline-secondary btn-sm" target="_blank"
+                    rel="noopener">GitHub</a>
                 </div>
               </div>
             </div>
@@ -222,7 +242,8 @@ function chatStore(){
                 <div class="fw-semibold">Recent job</div>
                 <div class="text-muted small" x-text="lastId ? lastId : 'No recent jobs yet' "></div>
               </div>
-              <a class="btn btn-sm btn-primary" :class="!lastId && 'disabled'" :href="lastId ? ('sim_results.html?job_id=' + encodeURIComponent(lastId)) : '#'">Open</a>
+              <a class="btn btn-sm btn-primary" :class="!lastId && 'disabled'"
+                :href="lastId ? ('sim_results.html?job_id=' + encodeURIComponent(lastId)) : '#'">Open</a>
             </div>
           </div>
         </div>
@@ -232,7 +253,7 @@ function chatStore(){
 
   <!-- Footer injected at runtime -->
   <div id="siteFooter"></div>
-    <script>
+  <script>
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof loadPartial === 'function') {
         // Use absolute paths to avoid /docs/ or other subpath prefixing
@@ -242,4 +263,5 @@ function chatStore(){
     });
   </script>
 </body>
+
 </html>
